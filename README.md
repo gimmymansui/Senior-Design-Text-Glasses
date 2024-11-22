@@ -1,4 +1,4 @@
-**The code included at this point has been altered and changed to fit on the exact model of Raspberry Pi that is being used for the demo** (Raspberry Pi 5 8 GB Vram, 64Gb storage)
+**The code included at this point has been altered and changed to fit on the exact model of Raspberry Pi that is being used for the demo** (Raspberry Pi 5 8 GB Vram, 64GB storage)
 
 **The code included are not exhaustive as the folders being run on the raspberry Pi due to the large file size exceeding the maximum size allow when being upload.**
 
@@ -8,7 +8,7 @@ The links to set up the alogirhtms on the Raspberry Pi are as follow - follow th
 
 **OpenAI Whisper:** https://www.youtube.com/watch?v=Mfbei9I8qQc
 
-**Google Gemini API: **https://www.youtube.com/watch?v=uV6hJQcuW4w (requires internet connection)
+**Google Gemini API:** https://www.youtube.com/watch?v=uV6hJQcuW4w (requires internet connection)
 
 **Vosk:** https://www.youtube.com/watch?v=yHYSwcJaw6c
 
