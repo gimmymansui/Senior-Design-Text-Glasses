@@ -4,7 +4,7 @@
 
 The largest model size that can be run is **medium**. (Size run-able: tiny, small, medium) 
 
-The links to set up the alogirhtms on the Raspberry Pi are as follow - follow these instead if you want an easier time: 
+The links to set up the algorithm on the Raspberry Pi are as follow - follow these instead if you want an easier time: 
 
 **OpenAI Whisper:** https://www.youtube.com/watch?v=Mfbei9I8qQc
 
