@@ -7,8 +7,11 @@ The largest model size that can be run is medium. (Size run-able: tiny, small, m
 The links to set up the alogirhtms on the Raspberry Pi are as follow - follow these instead if you want an easier time: 
 
 OpenAI Whisper: https://www.youtube.com/watch?v=Mfbei9I8qQc
+
 Google Gemini API: https://www.youtube.com/watch?v=uV6hJQcuW4w (requires internet connection)
+
 Vosk: https://www.youtube.com/watch?v=yHYSwcJaw6c
+
 
 When running on the Raspberry Pi, it is neccessary to run it in a virtual environment.
 
