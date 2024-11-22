@@ -1,6 +1,6 @@
 **The code included at this point has been altered and changed to fit on the exact model of Raspberry Pi that is being used for the demo** (Raspberry Pi 5 8 GB Vram, 64GB storage)
 
-**The code included are not exhaustive as the folders being run on the raspberry Pi due to the large file size exceeding the maximum size allow when being upload.**
+**The code included are not exhaustive. The folders being run on the raspberry Pi size exceeds the maximum allowed amount when uploading to Github.**
 
 The largest model size that can be run is **medium**. (Size run-able: tiny, small, medium) 
 
