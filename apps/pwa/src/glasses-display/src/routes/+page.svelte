@@ -1,24 +1,8 @@
 <script>
   import NotificationBlock from "$lib/components/NotificationBlock.svelte";
   import SubtitlesBlock from "$lib/components/SubtitlesBlock.svelte";
-  import { createWebSocket } from "$lib/websocket";
-  import { onMount } from "svelte";
 
   let subtitles = [];
-
-  onMount(() => {
-    console.log("Mounting");
-    const { close } = createWebSocket(
-      "ws://localhost:5173/ws",
-      (data) => {
-        subtitles = data; // Update subtitles array
-      }
-    );
-
-    return () => {
-      close();
-    };
-  });
 </script>
 
 <section class="display-wrapper">
