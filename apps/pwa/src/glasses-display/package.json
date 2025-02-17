@@ -7,7 +7,8 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''"
+		"prepare": "svelte-kit sync || echo ''",
+		"websocket": "node src/lib/websocket-server.js"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^4.0.0",
@@ -17,6 +18,8 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-		"ws": "^8.18.0"
+		"node-ws": "^0.0.4",
+		"ws": "^8.18.0",
+		"wscat": "^6.0.1"
 	}
 }
