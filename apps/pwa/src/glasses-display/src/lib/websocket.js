@@ -1,24 +1,41 @@
 // src/lib/websocket.js
-import { WebSocket } from 'ws';
+export const createWebSocketConnection = (url, onMessage) => {
+    console.log('Creating WebSocket connection to:', url);
+    
+    const ws = new WebSocket(url);
 
-export function createWebSocketServer(url, onMessage) {
-    const wss = new WebSocket.Server({ port: 5173 });
-  
-    wss.on('connection', (ws) => {
-      ws.on('message', (message) => {
-        console.log('WebSocket message received:', message);
+    ws.onopen = () => {
+        console.log('WebSocket connection established');
+    };
 
-        if (typeof onMessage === 'function') {
-            console.log('Calling onMessage');
-            onMessage(message);
+    ws.onmessage = (event) => {
+        console.log('WebSocket message received, type:', typeof event.data);
+        console.log('WebSocket message content:', event.data);
+        
+        try {
+            const data = JSON.parse(event.data);
+            console.log('Parsed data:', data);
+            
+            if (typeof onMessage === 'function') {
+                onMessage(data);
+            }
+        } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+            console.error('Raw message:', event.data);
         }
-      });
-      ws.on('close', () => {
+    };
+
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
         console.log('WebSocket connection closed');
-      });
-    });
+    };
 
     return {
-      send: (message) => wss.clients.forEach(client => client.send(message))
+        close: () => {
+            ws.close();
+        }
     };
-  }
+}

@@ -1,8 +1,6 @@
 <script>
   import NotificationBlock from "$lib/components/NotificationBlock.svelte";
   import SubtitlesBlock from "$lib/components/SubtitlesBlock.svelte";
-  import WebSocketManager from "$lib/components/WebSocketManager.svelte";
-  import { subtitlesStore } from "$lib/subtitles";
 
   let subtitles = [];
 
@@ -27,8 +25,6 @@
   }
 </script>
 
-<WebSocketManager />
-
 <section class="display-wrapper">
   <div class="content-wrapper">
     <NotificationBlock
@@ -41,19 +37,14 @@
     />
     <div class="recording-signal off"></div>
     <div class="subtitles-wrapper">
-      {#each $subtitlesStore as { speakerName, text, isPrevious }}
-        <SubtitlesBlock     
+      {#each subtitles as { speakerName, text, isPrevious }}
+        <SubtitlesBlock 
           {speakerName} 
           {text} 
           {isPrevious}
+          on:newSubtitle={handleNewSubtitle}
         />
       {/each}
     </div>
   </div>
-</section>
-
-<style>
-  @import "../normalize.css";
-  @import "../webflow.css";
-  @import "../frontend-glasses.webflow.css";
-</style>
+</section> 
