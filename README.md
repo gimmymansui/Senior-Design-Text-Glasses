@@ -4,7 +4,7 @@ _Due to limited VRAM capacity on the Raspberry Pi 5 mode at 8GB, the current imp
 Several potential speech to text models are currently being considered with Vosk being the most promising based on the testing results of its performance on the Pi5. However, due to the increased in hardware capabilities being offered by the Radxa Cm5, larger models that were previously un able to run will be consider._
 
 
-This document goes over the step by step guide to run the alogirthms on the radxa CM5 terminal.
+This document goes over the step by step guide to run the algorithms on the radxa CM5 terminal.
 
 
 ## Vosk Model
