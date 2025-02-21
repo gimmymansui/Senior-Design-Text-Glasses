@@ -13,7 +13,7 @@ This document goes over the step by step guide to run the algorithms on the radx
   
 > This directories contain the virtual environment requires to run the model, the several Vosk model of different sizes and the python script that runs the atual model - _my_vosk_script.py_
 
-**2) Create the virtual environment to run the alorithm : _python3 -m venv vosk-env_**
+**2) Create the virtual environment : _python3 -m venv vosk-env_**
 
 > The algorithm will NOT run if the virtual environment is not initializes before hand, To deactivate it, simply type : 
 > _deactivate_ 
