@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: convo-upload
+  labels:
+    app: convo-upload
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: convo-upload
+  template:
+    metadata:
+      labels:
+        app: convo-upload
+    spec:
+      containers:
+        - name: convo-upload
+          image: us-east4-docker.pkg.dev/group31-project-2025-451402/conversation-management/convo-upload:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: convo-upload-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: convo-upload-secrets
+                  key: DB_PASSWORD
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: convo-upload-secrets
+                  key: DB_NAME
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: convo-upload-secrets
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: convo-upload-secrets
+                  key: DB_PORT
+            - name: API_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: api-basic-auth
+                  key: API_USERNAME
+            - name: API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: api-basic-auth
+                  key: API_PASSWORD
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
