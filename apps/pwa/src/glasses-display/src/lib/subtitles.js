@@ -2,6 +2,13 @@ import { writable } from 'svelte/store';
 
 export const subtitlesStore = writable([]);
 
+/**
+ * Creates a new subtitle to the svelte subtitle store
+ * @param {Object} newSubtitle
+ * @param {Object} newSubtitle.speakerName
+ * @param {Object} newSubtitle.text
+ */
+
 export const addSubtitle = (newSubtitle) => {
   subtitlesStore.update(subtitles => {
     // Mark previous subtitles as "previous"
