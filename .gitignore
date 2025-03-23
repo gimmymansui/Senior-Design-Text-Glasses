@@ -4,6 +4,11 @@
 **/*.tfstate.backup
 **/.terraform.lock.hcl
 
+# Target specific problematic directory
+infrastructure/terraform/projects/group31-project-2025-451402/ContainerCluster/**/.terraform/
+infrastructure/terraform/projects/group31-project-2025-451402/ContainerCluster/.terraform/
+infrastructure/terraform/projects/group31-project-2025-451402/ContainerCluster/.terraform/*
+
 # Crash logs
 crash.log
 crash.*.log
