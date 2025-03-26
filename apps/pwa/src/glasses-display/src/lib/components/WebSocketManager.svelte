@@ -10,28 +10,30 @@
     onMount(() => {
       console.log('Mounting WebSocket manager');
       const messageHandler = {
-        OnSubtitles: (data) => {
+        onSubtitles: (data) => {
           addSubtitle({
             speakerName: data.speakerName || "Unknown Speaker",
-            text: data.text || ""
+            text: data.text || "",
+            isPartial: data.isPartial || false,
+            sentenceId: data.sentenceId || Date.now()
           });
         },
 
-        OnNotification: (data) => {
+        onNotification: (data) => {
           addNotification({
             header: data.header || "Notification",
             message: data.message || ""
           })
         },
 
-        OnRecord: (data) => {
+        onRecord: (data) => {
           toggleRecording();
           console.log("Record switch triggered: Recording...")
         }
-    };
+      };
   
-      const { close } = createWebSocketConnection(WS_URL, handleMessage);
+      const { close } = createWebSocketConnection(WS_URL, messageHandler);
       return close;
     });
   
-  </script>
+</script>
