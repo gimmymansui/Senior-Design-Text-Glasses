@@ -1,3 +1,4 @@
+ 
 import sounddevice as sd
 import numpy as np
 from vosk import Model, KaldiRecognizer
@@ -12,12 +13,12 @@ class AudioTranscriber:
         self.recognizer = KaldiRecognizer(self.model, 16000)
         self.is_running = False
         self.ws_client = None
-        
+
         # Audio settings
         self.sample_rate = 16000
         self.channels = 1
         self.block_size = 8000
-        
+
         # Message queue for communication between callback and async loop
         self.message_queue = queue.Queue()
 
@@ -25,15 +26,15 @@ class AudioTranscriber:
         """This is called (from a separate thread) for each audio block."""
         if status:
             print(status)
-        
+
         if self.is_running:
             data = np.frombuffer(indata, dtype=np.int16)
-            
+
             if self.recognizer.AcceptWaveform(data.tobytes()):
                 result = json.loads(self.recognizer.Result())
                 if result["text"]:
                     print(f"Transcribed: {result['text']}")
-                    # Instead of creating task here, put message in queue
+                    # Send final transcription to the message queue
                     self.message_queue.put({
                         "speakerName": "John",
                         "text": result["text"]
@@ -42,6 +43,11 @@ class AudioTranscriber:
                 partial = json.loads(self.recognizer.PartialResult())
                 if partial["partial"]:
                     print(f"Partial: {partial['partial']}")
+                    # Send partial transcription to the message queue
+                    self.message_queue.put({
+                        "speakerName": "John",
+                        "text": partial["partial"]
+                    })
 
     async def process_message_queue(self):
         """Process messages from the queue in the async context"""
@@ -62,11 +68,11 @@ class AudioTranscriber:
         """Main transcription loop"""
         self.is_running = True
         self.ws_client = ws_client
-        
+
         try:
             # Start the message processing task
             message_processor = asyncio.create_task(self.process_message_queue())
-            
+
             with sd.InputStream(
                 samplerate=self.sample_rate,
                 channels=self.channels,
