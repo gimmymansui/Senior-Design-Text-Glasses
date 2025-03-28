@@ -2,28 +2,15 @@
   import NotificationBlock from "$lib/components/NotificationBlock.svelte";
   import SubtitlesBlock from "$lib/components/SubtitlesBlock.svelte";
   import WebSocketManager from "$lib/components/WebSocketManager.svelte";
-  import { subtitlesStore } from "$lib/subtitles";
-
-  let subtitles = [];
-
-  function handleNewSubtitle(event) {
-    const newSubtitle = event.detail;
-    
-    // Mark previous subtitles as "previous"
-    if (subtitles.length > 0) {
-      subtitles = subtitles.map(subtitle => ({
-        ...subtitle,
-        isPrevious: true
-      }));
-    }
-
-    // Add new subtitle to the array
-    subtitles = [...subtitles, newSubtitle];
-
-    // Limit the number of visible subtitles
-    if (subtitles.length > 3) {
-      subtitles = subtitles.slice(-3);
-    }
+  import { subtitlesStore, addSubtitle } from "$lib/subtitles";
+  import { notificationStore, addNotification } from "$lib/notification";
+  import { isRecording, toggleRecording, recordingStatus } from "$lib/record";
+  
+  // Format seconds to MM:SS
+  function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 </script>
 
@@ -31,15 +18,21 @@
 
 <section class="display-wrapper">
   <div class="content-wrapper">
-    <NotificationBlock
-      title="NOISY"
-      message="Transcription quality may suffer in a noisy environment."
-    />
-    <NotificationBlock
-      title="Conversation saved!"
-      message="See the saved conversation transcript in the phone app."
-    />
-    <div class="recording-signal off"></div>
+    {#each $notificationStore as { header, message, isPrevious }}
+      <NotificationBlock
+        {header}
+        {message}
+        {isPrevious}
+      />
+    {/each}
+    
+    <div class="recording-container">
+      {#if $isRecording}
+        <div class="recording-timer">{formatTime($recordingStatus.duration)}</div>
+      {/if}
+      <div class="recording-signal {$isRecording ? 'on' : 'off'}"></div>
+    </div>
+    
     <div class="subtitles-wrapper">
       {#each $subtitlesStore as { speakerName, text, isPrevious }}
         <SubtitlesBlock     
@@ -56,4 +49,26 @@
   @import "../normalize.css";
   @import "../webflow.css";
   @import "../frontend-glasses.webflow.css";
+  
+  .recording-container {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    inset: 0% 0% auto auto;
+  }
+  
+  .recording-timer {
+    color: #e13131;
+    font-size: 16px;
+    font-weight: bold;
+    margin-right: 5px;
+  }
+  
+  /* Adjust the recording-signal position to work within the container */
+  :global(.recording-signal) {
+    position: relative;
+    inset: unset;
+  }
 </style>
