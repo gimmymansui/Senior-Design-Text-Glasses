@@ -13,7 +13,7 @@
         onSubtitles: (data) => {
           addSubtitle({
             speakerName: data.speakerName || "Unknown Speaker",
-            text: data.text || "",g
+            text: data.text || "",
             sentenceId: data.sentenceId || Date.now()
           });
         },
