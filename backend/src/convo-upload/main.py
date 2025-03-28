@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from fastapi import Depends, HTTPException, status
 import MySQLdb
 import os
+import yaml
+import json
 
 app = FastAPI(
     title="Conversation Management API",

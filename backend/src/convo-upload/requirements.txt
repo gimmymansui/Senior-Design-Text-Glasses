@@ -3,5 +3,6 @@ uvicorn
 mysqlclient
 python-multipart
 python-dotenv
+PyYAML
 
 
