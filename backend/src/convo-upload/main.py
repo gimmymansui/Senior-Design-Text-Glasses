@@ -5,7 +5,21 @@ from fastapi import Depends, HTTPException, status
 import MySQLdb
 import os
 
-app = FastAPI()
+app = FastAPI(
+    title="Conversation Management API",
+    description="API for storing and retrieving conversation data",
+    version="1.0.0",
+    terms_of_service="http://example.com/terms/",
+    contact={
+        "name": "API Support",
+        "email": "support@example.com",
+    },
+    license_info={
+        "name": "Apache 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+    },
+)
+
 security = HTTPBasic()
 DB_USER = os.getenv("DB_USER", "myuser")  # username
 DB_PASSWORD = os.getenv("DB_PASSWORD", "mypass")  # password
@@ -33,13 +47,38 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
         )
     return credentials.username
 #store endpoint to store conversations to database
-@app.post("/store/")
+@app.post("/store/", 
+    response_model=dict,
+    summary="Store a conversation",
+    description="Upload and store a conversation for a specific user with date information",
+    responses={
+        200: {
+            "description": "Successfully stored the conversation",
+            "content": {
+                "application/json": {
+                    "example": {"message": "Data stored successfully!", "user_id": 123}
+                }
+            }
+        },
+        401: {
+            "description": "Invalid authentication credentials",
+        },
+        500: {
+            "description": "Database error occurred",
+            "content": {
+                "application/json": {
+                    "example": {"error": "Database connection failed"}
+                }
+            }
+        }
+    }
+)
 async def store_conversation(
     username: str = Depends(authenticate),
-    user_id: int = Form(...),
-    date: str = Form(...),
-    month: str = Form(...),
-    year: str = Form(...),
+    user_id: int = Form(..., description="Unique identifier for the user"),
+    date: str = Form(..., description="Date of the conversation (DD-MM-YYYY)"),
+    month: str = Form(..., description="Month of the conversation"),
+    year: str = Form(..., description="Year of the conversation"),
     conversation: UploadFile = None  # Remove Form() from UploadFile
 ):
     conn = None
@@ -70,7 +109,36 @@ async def store_conversation(
 class SearchRequest(BaseModel):
     user_id: int
     date: str
-@app.post("/search/")
+@app.post("/search/",
+    response_model=dict,
+    summary="Search for a conversation",
+    description="Retrieve a conversation for a specific user and date",
+    responses={
+        200: {
+            "description": "Successfully retrieved the conversation",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "user_id": 123,
+                        "date": "01-01-2024",
+                        "conversation": "Example conversation content"
+                    }
+                }
+            }
+        },
+        401: {
+            "description": "Invalid authentication credentials",
+        },
+        404: {
+            "description": "Conversation not found",
+            "content": {
+                "application/json": {
+                    "example": {"message": "No conversation found for the given user_id and date"}
+                }
+            }
+        }
+    }
+)
 async def search_conversation(username: str = Depends(authenticate), request: SearchRequest = None):
     conn = None
     cursor = None
