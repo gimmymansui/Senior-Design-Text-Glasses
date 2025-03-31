@@ -1,32 +1,82 @@
 swagger: '2.0'
 info:
-  title: Conversation Upload API
-  description: API for handling conversation uploads
+  title: Conversation API
+  description: API for handling conversations, search, and summarization
   version: 1.0.0
+host: conversation-api-1y42jnx2aeb1o.apigateway.group31-project-2025-451402.cloud.goog
 schemes:
   - https
-produces:
-  - application/json
+# Add top-level security to protect all endpoints
+security:
+  - apiKeyAuth: []
+  - firebase: []
 paths:
-  /upload:
+  /store:
     post:
-      summary: Upload conversation data
-      operationId: uploadConversation
+      summary: Store conversation data
+      operationId: storeConversation
+      security:
+        - apiKeyAuth: []
+        - firebase: []
+      x-google-backend:
+        address: "https://convo-upload-proxy-261308802493.us-east4.run.app/store/"
+        path_translation: APPEND_PATH_TO_ADDRESS
       responses:
         '200':
-          description: Successful upload
+          description: Successful storage
           schema:
             type: object
             properties:
               message:
                 type: string
+                example: "Conversation stored successfully"
+  /search:
+    get:
+      summary: Search conversations
+      operationId: searchConversations
+      security:
+        - apiKeyAuth: []
+        - firebase: []
       x-google-backend:
-        address: [YOUR_CLOUD_FUNCTION_OR_CLOUD_RUN_URL]
-        protocol: h2
-security:
-  - api_key: []
+        address: "https://convo-upload-proxy-261308802493.us-east4.run.app/search/"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      responses:
+        '200':
+          description: Successful search
+          schema:
+            type: object
+            properties:
+              results:
+                type: array
+                items:
+                  type: object
+  /summarize:
+    post:
+      summary: Summarize conversation
+      operationId: summarizeConversation
+      security:
+        - apiKeyAuth: []
+        - firebase: []
+      x-google-backend:
+        address: "https://convo-summary-proxy-261308802493.us-east4.run.app/summarize/"
+        path_translation: APPEND_PATH_TO_ADDRESS
+      responses:
+        '200':
+          description: Successful summarization
+          schema:
+            type: object
+            properties:
+              summary:
+                type: string
 securityDefinitions:
-  api_key:
+  apiKeyAuth:
     type: apiKey
     name: key
-    in: query 
+    in: query
+  firebase:
+    type: oauth2
+    flow: "implicit"
+    authorizationUrl: ""
+    x-google-issuer: "https://securetoken.google.com/group31-project-2025-451402"
+    x-google-jwks_uri: "https://www.googleapis.com/service_accounts/v1/metadata/x509/securetoken@system.gserviceaccount.com"
+    x-google-audiences: "group31-project-2025-451402" 

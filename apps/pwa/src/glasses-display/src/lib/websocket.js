@@ -36,6 +36,7 @@ export const createWebSocketConnection = (url, onMessage) => {
     return {
         close: () => {
             ws.close();
-        }
+        },
+        ws: ws  // Return the WebSocket instance
     };
 }
