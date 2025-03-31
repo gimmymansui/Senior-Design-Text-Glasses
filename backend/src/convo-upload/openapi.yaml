@@ -1,0 +1,13 @@
+openapi: 3.1.0
+info:
+  title: Conversation Management API
+  description: API for storing and retrieving conversation data
+  termsOfService: http://example.com/terms/
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+paths: {}
