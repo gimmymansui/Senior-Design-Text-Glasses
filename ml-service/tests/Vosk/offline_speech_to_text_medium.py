@@ -4,7 +4,7 @@ import json
 from vosk import Model, KaldiRecognizer
 
 # Load the Vosk model (adjust the path if necessary)
-model = Model("vosk-model-en-us-0.22")
+model = Model("D:/GitHub/Senior_Design_Test/speech_processing/vosk-model-en-us-0.22")
 
 
 # Initialize recognizer

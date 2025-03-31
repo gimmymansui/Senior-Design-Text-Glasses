@@ -1,5 +1,5 @@
 // src/lib/websocket.js
-export const createWebSocketConnection = (url, onMessage) => {
+export const createWebSocketConnection = (url, messageHandler) => {
     console.log('Creating WebSocket connection to:', url);
     
     const ws = new WebSocket(url);
@@ -16,8 +16,14 @@ export const createWebSocketConnection = (url, onMessage) => {
             const data = JSON.parse(event.data);
             console.log('Parsed data:', data);
             
-            if (typeof onMessage === 'function') {
-                onMessage(data);
+            if (data.type === 'notification' && typeof messageHandler.onNotification === 'function') {
+                messageHandler.onNotification(data);
+            } else if (data.type === 'subtitles' && typeof messageHandler.onSubtitles === 'function') {
+                messageHandler.onSubtitles(data);
+            } else if (data.type === 'record' && typeof messageHandler.onRecord === 'function') {
+                messageHandler.onRecord(data);
+            } else {
+                console.log('Unknown message type:', data.type);
             }
         } catch (error) {
             console.error('Error parsing WebSocket message:', error);
