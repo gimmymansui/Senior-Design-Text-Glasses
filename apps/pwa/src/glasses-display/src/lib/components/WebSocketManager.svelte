@@ -20,6 +20,7 @@
           addSubtitle({
             speakerName: data.speakerName || "Unknown Speaker",
             text: data.text || "",
+            isPartial: data.isPartial || false,
             sentenceId: data.sentenceId || Date.now()
           });
           
@@ -79,32 +80,4 @@
         webSocket.send(JSON.stringify({ command: 'saveTranscript' }));
       }
     }
-
-      const messageHandler = {
-        onSubtitles: (data) => {
-          addSubtitle({
-            speakerName: data.speakerName || "Unknown Speaker",
-            text: data.text || "",
-            isPartial: data.isPartial || false,
-            sentenceId: data.sentenceId || Date.now()
-          });
-        },
-
-        onNotification: (data) => {
-          addNotification({
-            header: data.header || "Notification",
-            message: data.message || ""
-          })
-        },
-
-        onRecord: (data) => {
-          toggleRecording();
-          console.log("Record switch triggered: Recording...")
-        }
-      };
-  
-      const { close } = createWebSocketConnection(WS_URL, messageHandler);
-      return close;
-    });
-
 </script>
