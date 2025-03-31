@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+mysqlclient
+python-multipart
+python-dotenv
+<<<<<<< HEAD
+=======
+PyYAML
+>>>>>>> 9efbfc6140d4bcb928b44ae775b4ee05d1b8f44b
+
+
