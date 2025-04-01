@@ -1,10 +1,10 @@
 <script>
     import { onMount, createEventDispatcher } from "svelte";
     import { createWebSocketConnection } from "$lib/websocket";
-    import { addSubtitle } from "$lib/subtitles";
+    import { addSubtitle, subtitlesStore } from "$lib/subtitles";
     import { addNotification } from "$lib/notification";
     import { toggleRecording, setRecording } from "$lib/record";
-    import { saveTranscription } from "$lib/storage";
+    import { get } from 'svelte/store';
 
   
     const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
@@ -45,8 +45,8 @@
           dispatch('recordingStateChange', { isRecording: true });
         }
         else if (data.type === 'save') {
-          // Save the current transcription
-          saveTranscription(data.conversationName || "Unnamed Conversation");
+          // Save the current transcription - implement directly instead of using non-existent function
+          saveTranscript(data.conversationName || "Unnamed Conversation");
           addNotification({
             header: "Conversation Saved",
             message: `Saved as "${data.conversationName || 'Unnamed Conversation'}"`
@@ -75,6 +75,34 @@
       }
     }
     
+    // Add the local implementation of saveTranscript function
+    function saveTranscript(conversationName) {
+      const transcript = get(subtitlesStore);
+      const savedTranscripts = JSON.parse(localStorage.getItem('savedTranscripts') || '[]');
+      
+      const newSavedTranscript = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        name: conversationName,
+        subtitles: transcript
+      };
+      
+      savedTranscripts.push(newSavedTranscript);
+      localStorage.setItem('savedTranscripts', JSON.stringify(savedTranscripts));
+      
+      // Notify other connected devices via WebSocket
+      if (webSocket && webSocket.readyState === WebSocket.OPEN) {
+        webSocket.send(JSON.stringify({ 
+          command: 'transcriptSaved', 
+          id: newSavedTranscript.id,
+          name: conversationName
+        }));
+      }
+      
+      return newSavedTranscript;
+    }
+    
+    // Keep the existing exported function for API consistency
     export function saveTranscript() {
       if (webSocket && webSocket.readyState === WebSocket.OPEN) {
         webSocket.send(JSON.stringify({ command: 'saveTranscript' }));

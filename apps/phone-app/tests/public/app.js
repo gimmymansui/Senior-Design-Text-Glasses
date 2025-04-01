@@ -33,6 +33,23 @@ const userSignedOut = document.getElementById('userSignedOut');
 const apiKey = "AIzaSyAVStMRyP78jteCQaS9SugOn5KnWgwVtxY";
 const baseUrl = "https://conversation-gateway-3c1kiif1.uk.gateway.dev";
 
+// Hard coded values from .env file for testing
+const API_URL = "http://35.221.48.83";
+const API_USERNAME = "admin";
+const API_PASSWORD = "Group312025.";
+
+// Create the Basic Auth header
+const AUTH_HEADER = {
+    "Authorization": "Basic " + btoa(`${API_USERNAME}:${API_PASSWORD}`)
+};
+
+// Test data constants (similar to the Python test)
+const TEST_USER_ID = 9999;
+const TEST_DATE = "2025-02-26";
+const TEST_MONTH = "02";
+const TEST_YEAR = "2025";
+const TEST_CONVERSATION = "This is a test conversation for unit testing.";
+
 // Sign in with Google
 signInButton.addEventListener('click', async () => {
     const provider = new GoogleAuthProvider();
@@ -65,27 +82,23 @@ auth.onAuthStateChanged(user => {
             <img src="${user.photoURL}" alt="Profile picture" style="width: 50px; border-radius: 50%;">
             <p>Email: ${user.email}</p>
             
-            <!-- Add all test buttons -->
+            <!-- Add test buttons with hardcoded credentials -->
             <div class="api-test-buttons">
-                <button id="testStoreBtn">Test Store API</button>
-                <button id="testSearchBtn">Test Search API</button>
-                <button id="testSummarizeBtn">Test Summarize API</button>
-                <button id="testDirectBackendBtn">Test API Gateway</button>
-                <button id="pingBackendBtn">Ping API Gateway</button>
-                <button id="testGatewayBtn">OPTIONS Test</button>
+                <button id="testStoreConversationBtn">Test Store Conversation</button>
+                <button id="testSearchConversationBtn">Test Search Conversation</button>
+                <button id="testSearchNoConversationBtn">Test Search Non-Existent Conversation</button>
+                <button id="testUnauthorizedAccessBtn">Test Unauthorized Access</button>
                 <button id="showTokenBtn">Show Auth Token</button>
             </div>
             <div id="tokenDisplay" style="display:none; margin-top: 10px; padding: 10px; background-color: #f5f5f5; border-radius: 5px; word-break: break-all;"></div>
             <div id="apiTestResults" style="margin-top: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px;"></div>
         `;
 
-        // Add event listeners
-        document.getElementById('testStoreBtn').addEventListener('click', () => testApiEndpoint('store'));
-        document.getElementById('testSearchBtn').addEventListener('click', () => testApiEndpoint('search'));
-        document.getElementById('testSummarizeBtn').addEventListener('click', () => testApiEndpoint('summarize'));
-        document.getElementById('testDirectBackendBtn').addEventListener('click', testDirectBackend);
-        document.getElementById('pingBackendBtn').addEventListener('click', pingBackend);
-        document.getElementById('testGatewayBtn').addEventListener('click', testGateway);
+        // Add event listeners for test buttons
+        document.getElementById('testStoreConversationBtn').addEventListener('click', testStoreConversation);
+        document.getElementById('testSearchConversationBtn').addEventListener('click', testSearchConversation);
+        document.getElementById('testSearchNoConversationBtn').addEventListener('click', testSearchNoConversation);
+        document.getElementById('testUnauthorizedAccessBtn').addEventListener('click', testUnauthorizedAccess);
         document.getElementById('showTokenBtn').addEventListener('click', showToken);
 
         // Add token debug button handling
@@ -116,184 +129,156 @@ auth.onAuthStateChanged(user => {
     }
 });
 
-// Update the testDirectBackend function
-async function testDirectBackend() {
+// Test storing a conversation
+async function testStoreConversation() {
     const resultsDiv = document.getElementById('apiTestResults');
-    resultsDiv.innerHTML = `<p>Testing API Gateway connection...</p>`;
+    resultsDiv.innerHTML = `<p>Testing store conversation...</p>`;
     
     try {
-        // Get the current user's ID token
-        const token = await auth.currentUser.getIdToken(true);
+        // Create FormData and append the test data
+        const formData = new FormData();
+        formData.append('user_id', TEST_USER_ID);
+        formData.append('date', TEST_DATE);
+        formData.append('month', TEST_MONTH);
+        formData.append('year', TEST_YEAR);
         
-        // Use the API Gateway URL with proper authentication
-        const url = `${baseUrl}/store?key=${apiKey}`;
+        // Create a file for conversation
+        const conversationBlob = new Blob(
+            [TEST_CONVERSATION], 
+            { type: 'text/plain' }
+        );
+        formData.append('conversation', conversationBlob, 'conversation.txt');
         
-        console.log("Attempting to connect to:", url);
-        
-        const response = await fetch(url, {
-            method: 'GET',
-            mode: 'no-cors',
+        const response = await fetch(`${API_URL}/store/`, {
+            method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
+                ...AUTH_HEADER
+                // Don't set Content-Type when using FormData
+            },
+            body: formData
         });
         
-        console.log("API Gateway test response:", response);
-        resultsDiv.innerHTML += `
-            <p>API Gateway responded! (no-cors mode)</p>
+        const data = await response.json();
+        
+        resultsDiv.innerHTML = `
+            <h4>Store Conversation Test Results:</h4>
             <p>Status: ${response.status}</p>
-            <p>Note: With no-cors mode, we can't access the response content.</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
         `;
+        
+        console.log("Store response:", data);
     } catch (error) {
-        console.error("API Gateway test error:", error);
-        resultsDiv.innerHTML += `<p style="color:red">Error: ${error.message}</p>`;
+        resultsDiv.innerHTML = `
+            <h4>Store Conversation Test Error:</h4>
+            <p style="color: red;">${error.message}</p>
+        `;
+        console.error("Store error:", error);
     }
 }
 
-// Update the testApiEndpoint function
-async function testApiEndpoint(endpoint) {
+// Test searching for a conversation
+async function testSearchConversation() {
     const resultsDiv = document.getElementById('apiTestResults');
-    resultsDiv.innerHTML = `<p>Testing ${endpoint} endpoint...</p>`;
+    resultsDiv.innerHTML = `<p>Testing search conversation...</p>`;
     
     try {
-        // Get the current user's ID token
-        const token = await auth.currentUser.getIdToken(true);
+        const response = await fetch(`${API_URL}/search/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...AUTH_HEADER
+            },
+            body: JSON.stringify({
+                user_id: TEST_USER_ID,
+                date: TEST_DATE
+            })
+        });
         
-        let response;
-        let url = `${baseUrl}/${endpoint}?key=${apiKey}`;
+        const data = await response.json();
         
-        console.log(`Sending request to: ${url}`);
+        resultsDiv.innerHTML = `
+            <h4>Search Conversation Test Results:</h4>
+            <p>Status: ${response.status}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
         
-        if (endpoint === 'search') {
-            // GET request for search
-            response = await fetch(url, {
-                method: 'GET',
-                mode: 'no-cors',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-        } else if (endpoint === 'store') {
-            // POST request for store
-            const formData = new FormData();
-            formData.append('user_id', 123);
-            formData.append('date', getCurrentDate());
-            formData.append('month', new Date().toLocaleString('default', { month: 'long' }));
-            formData.append('year', new Date().getFullYear().toString());
-            
-            // Create a file for conversation
-            const conversationBlob = new Blob(
-                ["This is a test conversation to store."], 
-                { type: 'text/plain' }
-            );
-            formData.append('conversation', conversationBlob, 'conversation.txt');
-            
-            response = await fetch(url, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                    // Don't set Content-Type when using FormData
-                },
-                body: formData
-            });
-        } else if (endpoint === 'summarize') {
-            // POST request for summarize
-            const testData = {
-                conversation: "This is a test conversation to summarize."
-            };
-            
-            response = await fetch(url, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(testData)
-            });
+        console.log("Search response:", data);
+    } catch (error) {
+        resultsDiv.innerHTML = `
+            <h4>Search Conversation Test Error:</h4>
+            <p style="color: red;">${error.message}</p>
+        `;
+        console.error("Search error:", error);
+    }
+}
+
+// Test searching for a non-existent conversation
+async function testSearchNoConversation() {
+    const resultsDiv = document.getElementById('apiTestResults');
+    resultsDiv.innerHTML = `<p>Testing search for non-existent conversation...</p>`;
+    
+    try {
+        const response = await fetch(`${API_URL}/search/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...AUTH_HEADER
+            },
+            body: JSON.stringify({
+                user_id: 123456,  // Non-existent user ID
+                date: "2025-01-01"
+            })
+        });
+        
+        const data = await response.json();
+        
+        resultsDiv.innerHTML = `
+            <h4>Search Non-Existent Conversation Test Results:</h4>
+            <p>Status: ${response.status}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+        
+        console.log("Search non-existent response:", data);
+    } catch (error) {
+        resultsDiv.innerHTML = `
+            <h4>Search Non-Existent Conversation Test Error:</h4>
+            <p style="color: red;">${error.message}</p>
+        `;
+        console.error("Search non-existent error:", error);
+    }
+}
+
+// Test unauthorized access
+async function testUnauthorizedAccess() {
+    const resultsDiv = document.getElementById('apiTestResults');
+    resultsDiv.innerHTML = `<p>Testing unauthorized access...</p>`;
+    
+    try {
+        // Don't include auth header
+        const response = await fetch(`${API_URL}/store/`, {
+            method: 'POST'
+        });
+        
+        let resultText = `
+            <h4>Unauthorized Access Test Results:</h4>
+            <p>Status: ${response.status}</p>
+        `;
+        
+        try {
+            const data = await response.json();
+            resultText += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            console.log("Unauthorized response:", data);
+        } catch (e) {
+            resultText += `<p>Could not parse JSON response: ${e.message}</p>`;
         }
         
-        console.log(`${endpoint} response:`, response);
-        
-        // With no-cors mode, we can't access response content
-        resultsDiv.innerHTML = `
-            <h4>${endpoint.toUpperCase()} Test Results (no-cors mode):</h4>
-            <p>Status: ${response.status}</p>
-            <p>Type: ${response.type}</p>
-            <p>Note: With no-cors mode, we can't read the response content directly.</p>
-        `;
+        resultsDiv.innerHTML = resultText;
     } catch (error) {
-        console.error(`Error testing ${endpoint}:`, error);
         resultsDiv.innerHTML = `
-            <h4>${endpoint.toUpperCase()} Test Error:</h4>
+            <h4>Unauthorized Access Test Error:</h4>
             <p style="color: red;">${error.message}</p>
-            <p>Check the browser console for more details</p>
         `;
-    }
-}
-
-// Helper function to get current date in DD-MM-YYYY format
-function getCurrentDate() {
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    
-    return `${day}-${month}-${year}`;
-}
-
-// Update pingBackend function
-async function pingBackend() {
-    const resultsDiv = document.getElementById('apiTestResults');
-    resultsDiv.innerHTML = `<p>Pinging API Gateway...</p>`;
-    
-    try {
-        const token = await auth.currentUser.getIdToken(true);
-        console.log("Pinging:", `${baseUrl}/store?key=${apiKey}`);
-        
-        const response = await fetch(`${baseUrl}/store?key=${apiKey}`, {
-            method: 'GET',
-            mode: 'no-cors',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        resultsDiv.innerHTML += `<p>API Gateway responded! (no-cors mode)</p>`;
-        console.log("API Gateway ping response:", response);
-    } catch (error) {
-        resultsDiv.innerHTML += `<p style="color:red">Error: ${error.message}</p>`;
-        console.error("API Gateway ping error:", error);
-    }
-}
-
-// Update testGateway function
-async function testGateway() {
-    const resultsDiv = document.getElementById('apiTestResults');
-    resultsDiv.innerHTML = `<p>Testing API Gateway connection with OPTIONS...</p>`;
-    
-    try {
-        const token = await auth.currentUser.getIdToken(true);
-        console.log("Token:", token);
-        console.log("Testing OPTIONS:", `${baseUrl}/store?key=${apiKey}`);
-        
-        const response = await fetch(`${baseUrl}/store?key=${apiKey}`, {
-            method: 'OPTIONS',
-            mode: 'no-cors',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        resultsDiv.innerHTML += `<p>API Gateway responded! (no-cors mode)</p>`;
-        console.log("API Gateway OPTIONS response:", response);
-    } catch (error) {
-        resultsDiv.innerHTML += `<p style="color:red">Error: ${error.message}</p>`;
-        console.error("API Gateway OPTIONS error:", error);
+        console.error("Unauthorized access error:", error);
     }
 }
 
@@ -316,4 +301,5 @@ async function showToken() {
 }
 
 // Export these if you need to use them in other files
+export { app, auth, db, analytics };
 export { app, auth, db, analytics };
