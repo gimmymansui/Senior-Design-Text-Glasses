@@ -556,6 +556,87 @@
                 height: 250px;
             }
         }
+
+        /* Add these new styles for the login modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal {
+            background: rgba(25, 25, 50, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .login-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            transition: transform 0.2s ease;
+        }
+
+        .login-button:hover {
+            transform: scale(1.05);
+        }
+
+        .login-button img {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+
+        #loginError {
+            color: #ff6b6b;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
     </style>
 </head>
 <body>
@@ -594,19 +675,42 @@
             <button class="button" onclick="closeSidebar(); window.location.href='glasses_status.html'">Glasses Status</button>
             <button class="button" onclick="closeSidebar(); window.location.href='internet_connection.html'">Internet Connection</button>
             <button class="button" onclick="closeSidebar(); window.location.href='settings.html'">Settings</button>
-            <button class="button" onclick="closeSidebar(); window.location.href='transcription.html'">Transcription</button>
+            <button class="button" onclick="closeSidebar(); checkAuthForTranscription()">Transcription</button>
             <button class="button" onclick="closeSidebar(); window.location.href='account.html'">Account</button>
             <button class="button" onclick="closeSidebar(); window.location.href='support.html'">Support</button>
         </div>
         
         <div class="center-panel">
             <div class="logo">OptiView</div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <img id="userAvatar" src="" alt="User" class="user-avatar">
+                <span id="userName"></span>
+                <button class="button" style="margin-left: 10px; padding: 5px 10px;" onclick="firebaseAuth.signOut()">Sign Out</button>
+            </div>
             <button class="start-button" id="startButton" onclick="toggleButton()">
                 <span id="buttonText">Start</span>
             </button>
         </div>
     </div>
 
+    <!-- Add login modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <div class="modal-title">Login Required</div>
+            <p>Please sign in to access the transcription feature.</p>
+            <button class="login-button" onclick="firebaseAuth.signInWithGoogle()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Sign in with Google
+            </button>
+            <div id="loginError"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs - add these before your script -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="auth.js"></script>
+    
     <script>
         let isRainbow = false;
         let isListening = false;
@@ -721,6 +825,48 @@
         }
 
         createStars();
+
+        // Function to check auth before redirecting to transcription
+        function checkAuthForTranscription() {
+            if (firebaseAuth.checkAuth('transcription.html')) {
+                window.location.href = 'transcription.html';
+            }
+        }
+        
+        // Show login modal if redirected with showLogin parameter
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('showLogin') === 'true') {
+                document.getElementById('loginModal').style.display = 'flex';
+            }
+            
+            // Check auth state and update UI
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    // User is signed in
+                    const userInfo = document.getElementById('userInfo');
+                    const userAvatar = document.getElementById('userAvatar');
+                    const userName = document.getElementById('userName');
+                    
+                    userInfo.style.display = 'flex';
+                    userAvatar.src = user.photoURL || 'https://via.placeholder.com/40';
+                    userName.textContent = user.displayName || user.email;
+                    
+                    // Close the login modal if it's open
+                    document.getElementById('loginModal').style.display = 'none';
+                } else {
+                    // User is signed out
+                    document.getElementById('userInfo').style.display = 'none';
+                }
+            });
+        });
+        
+        // Close modal when clicking outside of it
+        document.getElementById('loginModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                this.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>

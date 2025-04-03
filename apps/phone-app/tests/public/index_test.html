@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Phone App</title>
+    <style>
+        #apiTestResults {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <script src="app.js" type="module" defer></script>
+    
+    <h1>Phone App</h1>
+
+    <section id="userSignedOut">  
+      <button id="signInButton">Sign in with Google</button>
+    </section>
+
+    <section id="userSignedIn" hidden="true">
+      <div id="userDetails"></div>
+      
+      <!-- API debug section -->
+      <div>
+        <h3>Debug Tools</h3>
+        <button id="showTokenBtn">Show Auth Token</button>
+        <div id="tokenDisplay" style="display:none; margin-top: 10px; padding: 10px; background-color: #efefef; border-radius: 5px; max-height: 100px; overflow-y: auto;"></div>
+        <button id="pingBackendBtn">Ping Backend Directly</button>
+        <button id="testGatewayBtn">Test API Gateway Connection</button>
+      </div>
+      
+      <button id="signOutButton">Sign out</button>
+    </section>
+
+</body>
+</html>
+
+
+

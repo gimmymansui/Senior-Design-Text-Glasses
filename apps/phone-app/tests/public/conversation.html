@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Space+Grotesk', sans-serif;
+            background: radial-gradient(ellipse at bottom, #0f0c29 0%, #302b63 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .conversation-header {
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 20px;
+        }
+
+        .conversation-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .conversation-meta {
+            display: flex;
+            gap: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meta-item svg {
+            width: 16px;
+            height: 16px;
+            opacity: 0.7;
+        }
+
+        .conversation-content {
+            line-height: 1.8;
+            white-space: pre-wrap;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .return-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s ease;
+        }
+
+        .return-button:hover {
+            transform: scale(1.05);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <button class="return-button" onclick="goBack()">
+        ← Back to Transcriptions
+    </button>
+
+    <div class="container">
+        <div id="conversationContent">
+            <div class="loading">Loading conversation...</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script>
+        // Initialize Firebase with your config
+        const firebaseConfig = {
+            apiKey: "AIzaSyByO6Jao6YnIQoUZInZc40zr6Rl-jQizpw",
+            authDomain: "group31-project-2025-451402.firebaseapp.com",
+            projectId: "group31-project-2025-451402",
+            storageBucket: "group31-project-2025-451402.firebasestorage.app",
+            messagingSenderId: "261308802493",
+            appId: "1:261308802493:web:1a2f77a6ceb7672752ded4",
+            measurementId: "G-HM2KV5T7FV"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // API connection details
+        const API_URL = "http://35.221.48.83";
+        const API_USERNAME = "admin";
+        const API_PASSWORD = "Group312025.";
+        const AUTH_HEADER = {
+            "Authorization": "Basic " + btoa(`${API_USERNAME}:${API_PASSWORD}`)
+        };
+
+        function goBack() {
+            window.location.href = 'transcription.html';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        async function loadConversation() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('user_id') || TEST_USER_ID;
+            const date = urlParams.get('date') || TEST_DATE;
+            
+            try {
+                const response = await fetch(`${API_URL}/search/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...AUTH_HEADER
+                    },
+                    body: JSON.stringify({
+                        user_id: parseInt(userId),
+                        date: date
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch conversation');
+                }
+
+                const data = await response.json();
+                if (data.conversations && data.conversations.length > 0) {
+                    // Find the specific conversation matching our date and user_id
+                    const conversation = data.conversations.find(
+                        conv => conv.date === date && conv.user_id === parseInt(userId)
+                    );
+                    
+                    if (conversation) {
+                        displayConversation(conversation);
+                    } else {
+                        showError('No matching conversation found');
+                    }
+                } else {
+                    showError('No conversations found');
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function displayConversation(data) {
+            const content = document.getElementById('conversationContent');
+            const formattedDate = formatDate(data.date);
+            
+            content.innerHTML = `
+                <div class="conversation-header">
+                    <div class="conversation-title">Conversation Transcript</div>
+                    <div class="conversation-meta">
+                        <div class="meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <span>${formattedDate}</span>
+                        </div>
+                        <div class="meta-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <span>User ID: ${data.user_id}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="conversation-content">
+                    ${data.conversation}
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            const content = document.getElementById('conversationContent');
+            content.innerHTML = `
+                <div class="error">
+                    Error: ${message}
+                    <br><br>
+                    <button onclick="goBack()" class="return-button">
+                        Return to Transcriptions
+                    </button>
+                </div>
+            `;
+        }
+
+        // Check authentication and load conversation when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    loadConversation();
+                } else {
+                    window.location.href = 'index.html?showLogin=true';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
