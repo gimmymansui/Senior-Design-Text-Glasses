@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bluetooth Test</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #0069d9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bluetooth Test Page</h1>
+    
+    <div class="instructions">
+        <h2>Instructions</h2>
+        <p>This page allows you to test the Bluetooth functionality of the Text Glasses application.</p>
+        <ol>
+            <li>Make sure your Bluetooth device is powered on and in pairing mode</li>
+            <li>Click the "Start Bluetooth Test" button below</li>
+            <li>Follow the prompts to select and connect to your device</li>
+            <li>Use the test panel that appears to test connection, recording, and saving</li>
+        </ol>
+    </div>
+    
+    <button id="startTest">Start Bluetooth Test</button>
+    
+    <script type="module">
+        import { initBluetoothTest } from './js/tests/test-bluetooth.js';
+        
+        document.getElementById('startTest').addEventListener('click', () => {
+            // Initialize the Bluetooth test UI
+            initBluetoothTest();
+            
+            // Hide the start button after initialization
+            document.getElementById('startTest').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - OptiView</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+    <div class="universe" id="universe"></div>
+    
+    <div class="home-toggle" onclick="goHome()">
+        <span>Home</span>
+    </div>
+
+    <div class="container-page">
+        <div class="settings-title">Settings</div>
+        
+        <div class="settings-section">
+            <h3>Display Settings</h3>
+            <div class="setting-item">
+                <span>Color Blind Mode</span>
+                <label class="color-blind-switch">
+                    <input type="checkbox" id="colorBlindToggle">
+                    <span class="color-blind-slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>Funky Mode</span>
+                <label class="funky-switch">
+                    <input type="checkbox" id="funkyToggle">
+                    <span class="funky-slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>Font Size</span>
+                <select>
+                    <option>Small</option>
+                    <option selected>Medium</option>
+                    <option>Large</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Glasses Settings</h3>
+            <div class="setting-item">
+                <span>Firmware Version</span>
+                <span>2.5.3</span>
+            </div>
+            <div class="setting-item">
+                <span>Auto Update</span>
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>Power Mode</span>
+                <select>
+                    <option>Performance</option>
+                    <option selected>Balanced</option>
+                    <option>Battery Saver</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Transcription Settings</h3>
+            <div class="setting-item">
+                <span>Auto Transcribe</span>
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>Language</span>
+                <select>
+                    <option selected>English (US)</option>
+                    <option>Spanish</option>
+                    <option>French</option>
+                    <option>German</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <span>Transcription Quality</span>
+                <select>
+                    <option>Low (Faster)</option>
+                    <option selected>Medium</option>
+                    <option>High (More Accurate)</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="return-button" onclick="goHome()">Return to Home</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/pages.js"></script>
+</body>
+</html>

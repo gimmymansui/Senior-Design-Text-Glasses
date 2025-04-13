@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiView - Text Glasses Interface</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="background-overlay" id="backgroundOverlay"></div>
+    <div class="universe" id="universe"></div>
+    <input type="file" id="backgroundUpload" accept="image/*">
+    <div class="background-upload-btn" onclick="document.getElementById('backgroundUpload').click()">
+        <div class="background-upload-tooltip">Change App Background</div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.2 15c.7-1.2 1-2.5.8-3.9-.3-1.8-1.5-3.4-3.2-4.2-1.7-.8-3.7-.6-5.3.4-1.6 1-2.6 2.8-2.4 4.7.2 1.8 1.5 3.4 3.2 4.2 1.7.8 3.7.6 5.3-.4"/>
+            <path d="M9 12H4L2 7s1-2 4-2 4 2 4 2l-2 5h5l2 5s-1 2-4 2-4-2-4-2l2-5"/>
+        </svg>
+    </div>
+    
+    <div class="container">
+        <div class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+            <span>Menu</span>
+        </div>
+        
+        <div class="sidebar" id="sidebar">
+            <div class="color-blind-toggle">
+                <span>Color Blind Mode</span>
+                <label class="color-blind-switch">
+                    <input type="checkbox" id="colorBlindToggle">
+                    <span class="color-blind-slider"></span>
+                </label>
+            </div>
+            <div class="funky-toggle">
+                <span>Funky Mode</span>
+                <label class="funky-switch">
+                    <input type="checkbox" id="funkyToggle">
+                    <span class="funky-slider"></span>
+                </label>
+            </div>
+            <button class="button" onclick="closeSidebar(); window.location.href='glasses_battery.html'">Glasses Battery</button>
+            <button class="button" onclick="closeSidebar(); window.location.href='glasses_status.html'">Glasses Status</button>
+            <button class="button" onclick="closeSidebar(); window.location.href='internet_connection.html'">Internet Connection</button>
+            <button class="button" onclick="closeSidebar(); window.location.href='settings.html'">Settings</button>
+            <button class="button" onclick="closeSidebar(); checkAuthForTranscription()">Transcription</button>
+            <button class="button" onclick="closeSidebar(); window.location.href='account.html'">Account</button>
+            <button class="button" onclick="closeSidebar(); window.location.href='support.html'">Support</button>
+        </div>
+        
+        <div class="center-panel">
+            <div class="logo">OptiView</div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <img id="userAvatar" src="" alt="User" class="user-avatar">
+                <span id="userName"></span>
+                <button class="button" style="margin-left: 10px; padding: 5px 10px;" onclick="firebaseAuth.signOut()">Sign Out</button>
+            </div>
+            <button class="start-button" id="startButton" onclick="toggleButton()">
+                <span id="buttonText">Start</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Login modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <div class="modal-title">Login Required</div>
+            <p>Please sign in to access the transcription feature.</p>
+            <button class="login-button" onclick="firebaseAuth.signInWithGoogle()">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Sign in with Google
+            </button>
+            <div id="loginError"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/auth.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
