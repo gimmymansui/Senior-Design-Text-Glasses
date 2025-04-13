@@ -58,6 +58,11 @@
             <button class="start-button" id="startButton" onclick="toggleButton()">
                 <span id="buttonText">Start</span>
             </button>
+            
+            <div class="bluetooth-container">
+                <div class="bluetooth-status" id="bluetoothStatus">Disconnected</div>
+                <button class="bluetooth-button" id="bluetoothConnect">Connect Glasses</button>
+            </div>
         </div>
     </div>
 
@@ -80,6 +85,7 @@
     
     <!-- Application Scripts -->
     <script src="js/auth.js"></script>
+    <script src="js/bluetooth.js"></script>
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

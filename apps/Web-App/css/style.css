@@ -630,3 +630,62 @@ input:focus + .funky-slider {
         height: 250px;
     }
 }
+
+/* Bluetooth Connection Styles */
+.bluetooth-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.bluetooth-status {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: #888;
+    transition: color 0.3s ease;
+}
+
+.bluetooth-status.connected {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.bluetooth-status.error {
+    color: #F44336;
+}
+
+.bluetooth-status.not-supported {
+    color: #FF9800;
+}
+
+.bluetooth-button {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.bluetooth-button:hover {
+    background-color: #0b7dda;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.bluetooth-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+}
+
+.bluetooth-button:disabled {
+    background-color: #cccccc;
+    color: #888888;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}

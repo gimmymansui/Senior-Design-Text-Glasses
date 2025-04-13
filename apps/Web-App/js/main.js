@@ -15,6 +15,8 @@ let backgroundUpload;
 let backgroundOverlay;
 let colorBlindToggle;
 let funkyToggle;
+let bluetoothConnectButton;
+let bluetoothStatus;
 
 /**
  * Initialize the application when DOM is loaded
@@ -30,6 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
     backgroundOverlay = document.getElementById("backgroundOverlay");
     colorBlindToggle = document.getElementById("colorBlindToggle");
     funkyToggle = document.getElementById("funkyToggle");
+    bluetoothConnectButton = document.getElementById("bluetoothConnect");
+    bluetoothStatus = document.getElementById("bluetoothStatus");
 
     // Set up event listeners
     setupEventListeners();
@@ -45,6 +49,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check URL parameters
     checkUrlParameters();
+    
+    // Initialize Bluetooth handlers
+    setupBluetoothHandlers();
 });
 
 /**
@@ -149,6 +156,15 @@ function toggleButton() {
         button.classList.add("listening");
         isRainbow = true;
         isListening = true;
+        
+        // If Bluetooth is connected, send record command
+        if (window.bluetoothHandler && window.bluetoothHandler.isConnected) {
+            window.bluetoothHandler.sendRecordCommand()
+                .catch(error => {
+                    console.error("Error sending record command:", error);
+                    alert("Failed to send record command: " + error.message);
+                });
+        }
     } else {
         buttonText.innerHTML = "Start";
         button.classList.remove("listening");
@@ -244,8 +260,115 @@ function checkUrlParameters() {
     }
 }
 
+/**
+ * Set up Bluetooth handlers
+ */
+function setupBluetoothHandlers() {
+    // Update UI if Bluetooth buttons exist
+    if (bluetoothConnectButton && bluetoothStatus) {
+        // Check if Web Bluetooth is supported
+        if (window.bluetoothHandler && window.bluetoothHandler.isSupported()) {
+            bluetoothConnectButton.addEventListener('click', connectBluetooth);
+            
+            // Set up event handlers for the Bluetooth connection
+            window.bluetoothHandler.onConnected = function() {
+                updateBluetoothUI(true);
+            };
+            
+            window.bluetoothHandler.onDisconnected = function() {
+                updateBluetoothUI(false);
+            };
+            
+            window.bluetoothHandler.onDataReceived = function(data) {
+                console.log("Received data from Bluetooth device:", data);
+                try {
+                    const jsonData = JSON.parse(data);
+                    // Handle received data here
+                    if (jsonData.status) {
+                        // Update UI based on status
+                    }
+                } catch (e) {
+                    console.error("Error parsing Bluetooth data:", e);
+                }
+            };
+        } else {
+            // Web Bluetooth not supported
+            bluetoothConnectButton.disabled = true;
+            bluetoothStatus.textContent = "Bluetooth Not Supported";
+            bluetoothStatus.classList.add("not-supported");
+        }
+    }
+}
+
+/**
+ * Connect to Bluetooth device
+ */
+async function connectBluetooth() {
+    if (!window.bluetoothHandler) return;
+    
+    try {
+        bluetoothConnectButton.disabled = true;
+        bluetoothStatus.textContent = "Connecting...";
+        
+        await window.bluetoothHandler.connect();
+        
+        // UI updates handled by onConnected callback
+    } catch (error) {
+        console.error("Bluetooth connection error:", error);
+        bluetoothConnectButton.disabled = false;
+        bluetoothStatus.textContent = "Connection Failed";
+        bluetoothStatus.classList.add("error");
+        
+        setTimeout(() => {
+            bluetoothStatus.textContent = "Disconnected";
+            bluetoothStatus.classList.remove("error");
+        }, 3000);
+    }
+}
+
+/**
+ * Update Bluetooth UI elements
+ */
+function updateBluetoothUI(isConnected) {
+    if (bluetoothConnectButton && bluetoothStatus) {
+        if (isConnected) {
+            bluetoothConnectButton.textContent = "Disconnect";
+            bluetoothConnectButton.onclick = disconnectBluetooth;
+            bluetoothStatus.textContent = "Connected";
+            bluetoothStatus.classList.add("connected");
+            bluetoothStatus.classList.remove("error", "not-supported");
+        } else {
+            bluetoothConnectButton.textContent = "Connect";
+            bluetoothConnectButton.onclick = connectBluetooth;
+            bluetoothStatus.textContent = "Disconnected";
+            bluetoothStatus.classList.remove("connected", "error", "not-supported");
+        }
+        
+        bluetoothConnectButton.disabled = false;
+    }
+}
+
+/**
+ * Disconnect from Bluetooth device
+ */
+async function disconnectBluetooth() {
+    if (!window.bluetoothHandler) return;
+    
+    try {
+        bluetoothConnectButton.disabled = true;
+        await window.bluetoothHandler.disconnect();
+        
+        // UI updates handled by onDisconnected callback
+    } catch (error) {
+        console.error("Bluetooth disconnect error:", error);
+        bluetoothConnectButton.disabled = false;
+    }
+}
+
 // Expose functions needed by HTML
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
 window.toggleButton = toggleButton;
 window.checkAuthForTranscription = checkAuthForTranscription;
+window.connectBluetooth = connectBluetooth;
+window.disconnectBluetooth = disconnectBluetooth;
