@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internet Connection - OptiView</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+    <div class="universe" id="universe"></div>
+    
+    <div class="home-toggle" onclick="goHome()">
+        <span>Home</span>
+    </div>
+
+    <div class="container-page">
+        <div class="connection-title">Internet Connection</div>
+        
+        <div class="connection-status">
+            Connected
+        </div>
+        
+        <div class="connection-details">
+            <div class="connection-detail">
+                <h3>Wi-Fi Details</h3>
+                <p>Status: Connected</p>
+                <p>Network: OptiNet_2.4G</p>
+                <p>Signal Strength: Excellent</p>
+                <p>IP Address: 192.168.1.105</p>
+            </div>
+            <div class="connection-detail">
+                <h3>Connection Quality</h3>
+                <p>Download Speed: 150 Mbps</p>
+                <p>Upload Speed: 50 Mbps</p>
+                <p>Latency: 15ms</p>
+                <p>Last Test: Today, 2:45 PM</p>
+            </div>
+            <div class="connection-detail">
+                <h3>Data Usage</h3>
+                <p>Today: 120 MB</p>
+                <p>This Week: 1.2 GB</p>
+                <p>This Month: 3.5 GB</p>
+                <p>Mode: Standard Quality</p>
+            </div>
+            <div class="connection-detail">
+                <h3>Network Options</h3>
+                <p>Auto-Connect: Enabled</p>
+                <p>Preferred Networks: 3</p>
+                <p>Security: WPA3</p>
+                <p>MAC Address: 00:1A:2B:3C:4D:5E</p>
+            </div>
+        </div>
+
+        <button class="return-button" onclick="goHome()">Return to Home</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/pages.js"></script>
+</body>
+</html>

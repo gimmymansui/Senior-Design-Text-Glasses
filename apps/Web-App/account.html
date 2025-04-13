@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account - OptiView</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="universe" id="universe"></div>
+    
+    <div class="home-toggle" onclick="goHome()">
+        <span>Home</span>
+    </div>
+
+    <div class="container-page">
+        <div class="account-title">My Account</div>
+        
+        <div class="profile-section">
+            <img id="profileImage" src="https://via.placeholder.com/120" alt="Profile" class="profile-image">
+            <h2 id="profileName" class="profile-name">John Doe</h2>
+            <p id="profileEmail" class="profile-email">john.doe@example.com</p>
+        </div>
+        
+        <div class="account-container">
+            <div class="account-card">
+                <h3>Account Settings</h3>
+                <div class="account-action">
+                    <span>Profile Information</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="account-action">
+                    <span>Security & Privacy</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="account-action">
+                    <span>Linked Accounts</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="account-action">
+                    <span>Language Preferences</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+
+            <div class="account-card">
+                <h3>Data & Storage</h3>
+                <div class="account-action">
+                    <span>Storage Usage</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="account-action">
+                    <span>Backup Settings</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="account-action">
+                    <span>Export Data</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="account-action">
+                    <span>Sync Options</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+
+            <div class="account-card">
+                <h3>Subscription</h3>
+                <div class="account-action">
+                    <span>Current Plan: Premium</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="account-action">
+                    <span>Billing Information</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="account-action">
+                    <span>Payment History</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+        </div>
+
+        <button class="return-button" onclick="goHome()">Return to Home</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/pages.js"></script>
+</body>
+</html>
