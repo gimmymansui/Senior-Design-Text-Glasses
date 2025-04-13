@@ -2,6 +2,7 @@ class BluetoothController {
   constructor() {
     this.device = null;
     this.characteristic = null;
+    this.SERVICE_UUID = '94f39d29-7d6d-437d-973b-fba39e49d4ee';
   }
 
   async connect() {

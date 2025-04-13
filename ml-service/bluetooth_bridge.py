@@ -1,106 +1,115 @@
 import bluetooth
-import socket
 import json
 import threading
-import requests
 import websocket
+from vosk_speech_model import AudioTranscriber  # Import your existing transcriber
 
-# WebSocket URL (same as in your WebSocketManager.svelte)www
-WS_URL = "ws://localhost:8080"
-
-# Set up Bluetooth server socket
-server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-server_sock.bind(("", bluetooth.PORT_ANY))
-server_sock.listen(1)
-
-port = server_sock.getsockname()[1]
-
-# Advertise the service
-uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"  # Generate a unique UUID
-bluetooth.advertise_service(
-    server_sock, 
-    "SpeechTranscriptionService",
-    service_id=uuid,
-    service_classes=[uuid, bluetooth.SERIAL_PORT_CLASS],
-    profiles=[bluetooth.SERIAL_PORT_PROFILE]
-)
-
-print(f"Waiting for Bluetooth connection on RFCOMM channel {port}")
-
-# Function to handle Bluetooth connections
-def handle_bluetooth_connection(client_sock, client_info):
-    print(f"Accepted connection from {client_info}")
-    ws = websocket.WebSocket()
-    
-    try:
-        # Connect to the WebSocket server
-        ws.connect(WS_URL)
-        print("Connected to WebSocket server")
+class BluetoothBridge:
+    def __init__(self):
+        # Initialize Bluetooth server
+        self.server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        self.server_sock.bind(("", bluetooth.PORT_ANY))
+        self.server_sock.listen(1)
+        self.port = self.server_sock.getsockname()[1]
         
-        while True:
-            # Receive data from Bluetooth
-            data = client_sock.recv(1024)
-            if not data:
-                break
-                
-            # Parse the command
-            try:
-                command_str = data.decode('utf-8')
-                print(f"Received raw data: {command_str}")
-                
-                command = json.loads(command_str)
-                print(f"Parsed command: {command}")
-                
-                # Forward the command to WebSocket server
-                ws.send(json.dumps(command))
-                print(f"Forwarded command to WebSocket")
-                
-                # Wait for any responses
-                if ws.connected:
-                    # Set a timeout for receiving WebSocket responses
-                    ws.settimeout(0.1)
-                    try:
-                        response = ws.recv()
-                        print(f"Received response from WebSocket: {response}")
-                        # Forward the response back to the Bluetooth device
-                        # Make sure it's sent as bytes
-                        if isinstance(response, str):
-                            client_sock.send(response.encode('utf-8'))
-                        else:
-                            client_sock.send(response)
-                    except websocket.WebSocketTimeoutException:
-                        pass  # No response available
-                    finally:
-                        ws.settimeout(None)  # Reset timeout
-            except json.JSONDecodeError:
-                print(f"Invalid JSON: {command_str}")
-            except UnicodeDecodeError:
-                print(f"Unable to decode data as UTF-8: {data}")
-                
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        ws.close()
-        client_sock.close()
-        print(f"Connection from {client_info} closed")
-
-# Main loop to accept connections
-while True:
-    try:
-        client_sock, client_info = server_sock.accept()
-        print(f"Accepted connection from {client_info}")
+        # Service UUID - match with your webapp
+        self.uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
         
-        # Start a new thread to handle this connection
-        client_thread = threading.Thread(
-            target=handle_bluetooth_connection,
-            args=(client_sock, client_info)
+        # Initialize transcriber
+        self.transcriber = AudioTranscriber()
+        
+        # WebSocket connection to your server
+        self.ws = None
+        self.ws_url = "ws://localhost:8080"
+
+    def start_advertising(self):
+        bluetooth.advertise_service(
+            self.server_sock,
+            "SpeechTranscriptionService",
+            service_id=self.uuid,
+            service_classes=[self.uuid, bluetooth.SERIAL_PORT_CLASS],
+            profiles=[bluetooth.SERIAL_PORT_PROFILE]
         )
-        client_thread.daemon = True
-        client_thread.start()
-    except Exception as e:
-        print(f"Error accepting connection: {e}")
-        break
+        print(f"Advertising Bluetooth service on RFCOMM channel {self.port}")
 
-# Clean up
-server_sock.close()
-print("Bluetooth server stopped") 
+    def handle_websocket_message(self, ws, message):
+        try:
+            data = json.loads(message)
+            if data.get('type') == 'record':
+                # Toggle recording state
+                if not self.transcriber.is_running:
+                    print("Starting recording...")
+                    self.transcriber.is_running = True
+                else:
+                    print("Stopping recording...")
+                    self.transcriber.is_running = False
+                
+                # Send acknowledgment back through WebSocket
+                response = {
+                    'type': 'recordingStatus',
+                    'status': 'recording' if self.transcriber.is_running else 'stopped'
+                }
+                ws.send(json.dumps(response))
+                
+        except json.JSONDecodeError:
+            print(f"Invalid JSON message received: {message}")
+        except Exception as e:
+            print(f"Error handling WebSocket message: {e}")
+
+    def connect_websocket(self):
+        def on_message(ws, message):
+            self.handle_websocket_message(ws, message)
+
+        def on_error(ws, error):
+            print(f"WebSocket error: {error}")
+
+        def on_close(ws, close_status_code, close_msg):
+            print("WebSocket connection closed")
+            # Attempt to reconnect after delay
+            threading.Timer(5.0, self.connect_websocket).start()
+
+        def on_open(ws):
+            print("WebSocket connection established")
+
+        # Create WebSocket connection
+        self.ws = websocket.WebSocketApp(
+            self.ws_url,
+            on_message=on_message,
+            on_error=on_error,
+            on_close=on_close,
+            on_open=on_open
+        )
+        
+        # Start WebSocket connection in a separate thread
+        ws_thread = threading.Thread(target=self.ws.run_forever)
+        ws_thread.daemon = True
+        ws_thread.start()
+
+    def run(self):
+        try:
+            # Start WebSocket connection
+            self.connect_websocket()
+            
+            # Start Bluetooth advertising
+            self.start_advertising()
+            
+            print("Bluetooth bridge running. Waiting for connections...")
+            
+            while True:
+                # Accept Bluetooth connections but don't do anything with them
+                # We're only using Bluetooth for discovery
+                client_sock, client_info = self.server_sock.accept()
+                print(f"Accepted connection from {client_info}")
+                client_sock.close()
+                
+        except KeyboardInterrupt:
+            print("\nShutting down...")
+        finally:
+            if self.server_sock:
+                self.server_sock.close()
+            if self.ws:
+                self.ws.close()
+
+if __name__ == "__main__":
+    bridge = BluetoothBridge()
+    bridge.run()
