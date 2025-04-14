@@ -95,7 +95,7 @@ class DataTransferCharacteristic extends bleno.Characteristic {
 
         console.log('--- Preparing data for BLE transmission ---');
         console.log(`Original data length: ${data.length} bytes`);
-        console.log('--- Will send with SOM/EOM markers ---');
+        console.log('--- Sending with SOM/EOM markers (no artificial delay) ---');
 
         try {
             const dataBuffer = Buffer.from(data, 'utf8');
@@ -108,35 +108,24 @@ class DataTransferCharacteristic extends bleno.Characteristic {
             for (let i = 0; i < dataBuffer.length; i += chunkSize) {
                 const chunk = dataBuffer.slice(i, Math.min(i + chunkSize, dataBuffer.length));
                 this.updateValueCallback(chunk);
-                // Optional: Add a tiny delay between chunks too, if needed
+                // Optional: Add tiny delay *between* chunks if absolutely necessary, but try without first
                 // await new Promise(resolve => setTimeout(resolve, 5)); // Requires making sendData async
             }
 
-            // *** ADD DELAY BEFORE EOM ***
-            const eomDelayMs = 100; // Start with 100ms, adjust if needed
-            console.log(`Waiting ${eomDelayMs}ms before sending EOM marker...`);
+            // Send EOM immediately after data chunks
+            console.log(`Sending EOM marker (${EOM_MARKER.length} bytes) immediately.`);
+            if (this.updateValueCallback) { // Check if still valid
+                this.updateValueCallback(EOM_MARKER);
+                console.log(`Successfully initiated sending of EOM marker.`);
+            } else {
+                console.log('Client unsubscribed before EOM could be sent.');
+            }
 
-            setTimeout(() => {
-                try {
-                    if (this.updateValueCallback) { // Check if still valid
-                       console.log(`Sending EOM marker (${EOM_MARKER.length} bytes) after delay.`);
-                       this.updateValueCallback(EOM_MARKER);
-                       console.log(`Successfully initiated sending of EOM marker.`);
-                    } else {
-                        console.log('Client unsubscribed before EOM could be sent.');
-                    }
-                } catch (eomError) {
-                     console.error('Error sending EOM marker within setTimeout:', eomError);
-                }
-            }, eomDelayMs);
-            // **************************
-
-
-            console.log(`Successfully initiated sending of ${dataBuffer.length} bytes data (+ markers) via BLE. EOM scheduled.`);
-            return true; // Note: EOM is now sent asynchronously
+            console.log(`Successfully initiated sending of ${dataBuffer.length} bytes data (+ markers) via BLE.`);
+            return true;
 
         } catch (error) {
-            console.error('Error during data/SOM sending via BLE:', error);
+            console.error('Error during data/marker sending via BLE:', error);
             return false;
         }
     }
