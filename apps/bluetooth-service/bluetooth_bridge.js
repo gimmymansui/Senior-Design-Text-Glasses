@@ -93,29 +93,23 @@ class DataTransferCharacteristic extends bleno.Characteristic {
             return false;
         }
 
-        console.log('--- Preparing data for BLE transmission ---');
-        console.log(`Original data length: ${data.length} bytes`);
-        // console.log(data); // Keep this log if you need to see the full data before sending
-        console.log('--- Will send with SOM/EOM markers ---');
-
         try {
-            const dataBuffer = Buffer.from(data, 'utf8'); // Explicitly specify UTF-8
-            const chunkSize = 500; // Reduce chunk size slightly to accommodate potential overhead
+            const dataBuffer = Buffer.from(data, 'utf8'); // Convert JSON string to buffer
+            // Create the full message with markers
+            const messageBuffer = Buffer.concat([SOM_MARKER, dataBuffer, EOM_MARKER]);
 
-            console.log(`Sending SOM marker (${SOM_MARKER.length} bytes)`);
-            this.updateValueCallback(SOM_MARKER); // Send Start marker
+            const chunkSize = 512; // MTU - Characteristic User Description
+            console.log(`Sending message of size ${messageBuffer.length} bytes in chunks of ${chunkSize}`);
 
-            console.log(`Sending data (${dataBuffer.length} bytes) in chunks of max ${chunkSize}...`);
-            for (let i = 0; i < dataBuffer.length; i += chunkSize) {
-                const chunk = dataBuffer.slice(i, Math.min(i + chunkSize, dataBuffer.length));
-                // console.log(`Sending chunk ${Math.floor(i/chunkSize) + 1}: ${chunk.length} bytes`);
-                this.updateValueCallback(chunk); // Send data chunk
+            for (let i = 0; i < messageBuffer.length; i += chunkSize) {
+                const chunk = messageBuffer.slice(i, i + chunkSize);
+                console.log(`Sending chunk ${Math.floor(i / chunkSize) + 1}:`, chunk.toString()); // Log chunk content for debug
+                this.updateValueCallback(chunk);
+                // Optional: Add a small delay between chunks if needed
+                // await new Promise(resolve => setTimeout(resolve, 10));
             }
 
-            console.log(`Sending EOM marker (${EOM_MARKER.length} bytes)`);
-            this.updateValueCallback(EOM_MARKER); // Send End marker
-
-            console.log(`Successfully initiated sending of ${dataBuffer.length} bytes data (+ markers) via BLE`);
+            console.log(`Sent total ${messageBuffer.length} bytes of data via BLE`);
             return true;
         } catch (error) {
             console.error('Error sending data via BLE:', error);
@@ -149,61 +143,41 @@ function connectToWebSocket() {
 
     webSocketClient.on('message', function incoming(message) {
         try {
-            const messageString = message.toString();
-            const parsedMessage = JSON.parse(messageString);
-            // Log only the type to reduce noise, unless it's the one we want
-            // console.log('Received message type from WebSocket server:', parsedMessage.type);
-
-            // *** STRONGLY ENFORCE PROCESSING ONLY RECORD_DATA MESSAGES ***
-            // Check if this is the specific message containing the full conversation
+            const parsedMessage = JSON.parse(message.toString());
+            console.log('Received message from WebSocket server:', parsedMessage);
+            
             if (parsedMessage.type === 'record_data' && parsedMessage.command === 'send_conversation') {
-                console.log('Received CORRECT conversation data from WebSocket. Processing for BLE transfer...');
-                console.log(`Data size: ${parsedMessage.data ? parsedMessage.data.length : 0} bytes`);
-
-                // Send via BLE if a client is connected and subscribed
+                console.log('Received conversation data from WebSocket');
+                
+                // Send via BLE if a client is connected
                 if (dataTransferCharacteristic && dataTransferCharacteristic.updateValueCallback) {
                     const success = dataTransferCharacteristic.sendData(parsedMessage.data);
-
+                    
                     // Send status back
                     const statusResponse = {
                         type: 'transfer_status',
                         status: success ? 'sent' : 'failed',
                         error: success ? null : 'Failed to send via BLE'
                     };
-
-                     // Ensure WebSocket is still open before sending status
-                     if (webSocketClient && webSocketClient.readyState === WebSocket.OPEN) {
-                        webSocketClient.send(JSON.stringify(statusResponse));
-                        console.log('Sent transfer status back to WebSocket:', statusResponse.status);
-                     } else {
-                         console.log('WebSocket closed before status could be sent.');
-                     }
-
+                    
+                    webSocketClient.send(JSON.stringify(statusResponse));
+                    console.log('Sent transfer status:', statusResponse.status);
                 } else {
-                    console.error('Cannot send conversation: No BLE client subscribed for data transfer notifications.');
-
-                    // Send error status back if possible
-                     if (webSocketClient && webSocketClient.readyState === WebSocket.OPEN) {
-                        webSocketClient.send(JSON.stringify({
-                            type: 'transfer_status',
-                            status: 'failed',
-                            error: 'No BLE client connected or subscribed for data transfer'
-                        }));
-                     } else {
-                         console.log('WebSocket closed before error status could be sent.');
-                     }
+                    console.error('No BLE client subscribed for notifications');
+                    
+                    // Send error status
+                    webSocketClient.send(JSON.stringify({
+                        type: 'transfer_status',
+                        status: 'failed',
+                        error: 'No BLE client connected'
+                    }));
                 }
-            }
-            // *** EXPLICITLY IGNORE ALL OTHER MESSAGE TYPES ***
-            else {
-                // Do nothing for other message types like 'subtitles', 'notification', 'record', etc.
-                // You can optionally log them for debugging, but the bridge won't act on them.
-                 console.log(`Ignoring message type "${parsedMessage.type}" received from WebSocket.`);
+            } else if (parsedMessage.type === 'record') {
+                console.log('Received record command from WebSocket');
+                // Original command handling logic can remain
             }
         } catch (error) {
             console.error('Error processing WebSocket message:', error);
-            // Log the raw message content if parsing fails or an error occurs
-            console.error('Raw message content:', message.toString());
         }
     });
 
