@@ -14,7 +14,7 @@ class BluetoothHandler {
         // UUIDs should match those in bluetooth_bridge.js
         this.SERVICE_UUID = "5f47a3c0-4f1a-4a69-9f6d-1b2c3d4e5f6a";
         this.COMMAND_CHARACTERISTIC_UUID = "7d8e1b3c-6a7b-4e8f-9a0b-1c2d3e4f5a6b";
-        this.DATA_TRANSFER_UUID = "data-transfer-uuid"; // Match the UUID from bridge
+        this.DATA_TRANSFER_UUID = "8f5b1d6a-4e2b-4f3a-8e7d-2a3c4e5f6b7c"; // Match the UUID from bridge
         
         // Callbacks
         this.onConnected = null;

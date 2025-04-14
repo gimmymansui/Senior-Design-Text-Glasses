@@ -6,6 +6,9 @@ import asyncio
 from websocket_client import WebSocketClient
 import queue
 import time
+import re
+from speaker_diarizer import SimpleHeuristicDiarizer
+import noisereduce as nr
 
 class AudioTranscriber:
     def __init__(self, model_path="/home/radxa/dev/large-vosk/"):
@@ -17,57 +20,105 @@ class AudioTranscriber:
         # Audio settings
         self.sample_rate = 16000
         self.channels = 1
-        self.block_size = 2000  # Smaller block size for faster processing
+        self.block_size = 2048
 
         # Message queue for communication between callback and async loop
         self.message_queue = queue.Queue()
 
-        # Speaker tracking (simplified)
-        self.current_speaker = "Speaker 1"
-        self.speakers = ["Speaker 1", "Speaker 2"]
-        self.speaker_index = 0
+        # Sentence structure tracking
+        self.sentence_buffer = ""
+        self.last_partial_text = ""
 
-    def detect_speaker(self, audio_data):
-        """Simple speaker detection based on audio energy"""
-        energy = np.mean(np.abs(audio_data))
+        # Speaker Diarization
+        self.diarizer = SimpleHeuristicDiarizer(sample_rate=self.sample_rate)
 
-        # Very simple speaker detection - just to maintain functionality
-        if energy < 100:  # Low energy might indicate silence
-            return self.speakers[self.speaker_index]
-
-        return self.current_speaker
+        # Noise Reduction
+        self.noise_reducer = nr.ReduceNoise(
+            n_std_thresh_stationary=1.5,
+            stationary=False,
+            sr=self.sample_rate,
+            n_fft=512,
+            win_length=512,
+            hop_length=128,
+            freq_mask_smooth_hz=500,
+            prop_decrease=1.0
+        )
 
     def audio_callback(self, indata, frames, time, status):
         """This is called (from a separate thread) for each audio block."""
         if status:
-            print(status)
+            print(f"Audio status: {status}")
 
         if self.is_running:
-            data = np.frombuffer(indata, dtype=np.int16)
-            speaker = self.detect_speaker(data)
+            try:
+                # 1. Convert raw buffer (bytes) to int16 numpy array
+                data_int16 = np.frombuffer(indata, dtype=np.int16)
 
-            if self.recognizer.AcceptWaveform(data.tobytes()):
-                result = json.loads(self.recognizer.Result())
-                if result["text"]:
-                    # Directly send complete utterance without sentence tracking
-                    self.message_queue.put({
-                        "type": "subtitles",
-                        "speakerName": speaker,
-                        "text": result["text"],
-                        "isPartial": False
-                    })
-            else:
-                partial = json.loads(self.recognizer.PartialResult())
-                if partial["partial"]:
-                    partial_text = partial["partial"]
+                # 2. Convert int16 to float32 for noisereduce
+                # Ensure data is copied to avoid modifying original buffer if needed elsewhere
+                data_float32 = data_int16.astype(np.float32) / 32768.0
 
-                    # Send all partial results immediately without filtering
-                    self.message_queue.put({
-                        "type": "subtitles",
-                        "speakerName": speaker,
-                        "text": partial_text,
-                        "isPartial": True
-                    })
+                # 3. Apply noise reduction
+                # This mutates the state of self.noise_reducer if stationary=True
+                reduced_noise_float32 = self.noise_reducer.reduce(
+                    y=data_float32,
+                    sr=self.sample_rate
+                )
+
+                # 4. Convert float32 back to int16 for diarizer and Vosk
+                reduced_noise_int16 = (reduced_noise_float32 * 32768.0).astype(np.int16)
+
+                # 5. Perform Diarization on cleaned audio
+                speaker = self.diarizer.diarize(reduced_noise_int16)
+
+                # 6. Feed cleaned audio (as bytes) to Vosk
+                if self.recognizer.AcceptWaveform(reduced_noise_int16.tobytes()):
+                    result = json.loads(self.recognizer.Result())
+                    final_text = result.get("text", "")
+                    if final_text:
+                        # Append finalized text chunk to the buffer
+                        self.sentence_buffer += final_text + " "
+                        self.last_partial_text = ""
+
+                        # Find the last sentence boundary
+                        boundary_match = None
+                        for match in re.finditer(r'[.?!]', self.sentence_buffer):
+                            boundary_match = match
+
+                        if boundary_match:
+                            boundary_index = boundary_match.end()
+                            sentences_to_send = self.sentence_buffer[:boundary_index].strip()
+                            # Update buffer with remaining text
+                            self.sentence_buffer = self.sentence_buffer[boundary_index:].lstrip()
+
+                            if sentences_to_send:
+                                # Send the complete sentence(s)
+                                self.message_queue.put({
+                                    "type": "subtitles",
+                                    "speakerName": speaker,
+                                    "text": sentences_to_send,
+                                    "isPartial": False
+                                })
+                        # Note: Any remaining text in sentence_buffer is carried over
+                else:
+                    partial = json.loads(self.recognizer.PartialResult())
+                    partial_text = partial.get("partial", "")
+                    if partial_text and partial_text != self.last_partial_text:
+                        self.last_partial_text = partial_text
+                        # Send the current buffer + new partial text
+                        text_to_send = (self.sentence_buffer + partial_text).strip()
+                        if text_to_send:
+                            self.message_queue.put({
+                                "type": "subtitles",
+                                "speakerName": speaker,
+                                "text": text_to_send,
+                                "isPartial": True
+                            })
+            except Exception as e:
+                # Log errors in the callback more visibly
+                print(f"Error in audio_callback: {e}")
+                import traceback
+                traceback.print_exc()
 
     async def process_message_queue(self):
         """Process messages from the queue in the async context"""
@@ -91,6 +142,9 @@ class AudioTranscriber:
         self.ws_client = ws_client
 
         try:
+            # Reset diarizer state at start
+            self.diarizer.reset()
+
             # Start the message processing task
             message_processor = asyncio.create_task(self.process_message_queue())
 
@@ -125,6 +179,7 @@ async def main():
     try:
         if await client.connect():
             transcriber = AudioTranscriber()
+            transcriber.diarizer.reset()
             await transcriber.transcribe_stream(client)
         else:
             print("Failed to connect to WebSocket server")

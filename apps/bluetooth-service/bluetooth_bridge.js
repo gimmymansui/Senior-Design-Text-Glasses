@@ -86,7 +86,7 @@ class CommandCharacteristic extends bleno.Characteristic {
 class DataTransferCharacteristic extends bleno.Characteristic {
     constructor() {
         super({
-            uuid: 'data-transfer-uuid', // Replace with a proper UUID
+            uuid: '8f5b1d6a-4e2b-4f3a-8e7d-2a3c4e5f6b7c', // Use a proper UUID
             properties: ['notify', 'write'],
             value: null,
             descriptors: [
