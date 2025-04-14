@@ -1,6 +1,6 @@
 import { writable, get } from 'svelte/store';
 import { startRecording, stopRecording } from './subtitles.js';
-import { websocketConnection } from '$lib/components/WebSocketManager.svelte';
+import { websocketConnection } from '$lib/stores/websocket-store';
 
 export const isRecording = writable(false);
 export const recordingStatus = writable({
@@ -14,16 +14,22 @@ let recordingTimer = null;
 let startTime = null;
 
 export function toggleRecording() {
-    let currentState;
-    isRecording.update(state => {
-        currentState = !state;
-        return currentState;
-    });
+    const currentlyRecording = get(isRecording);
     
-    if (currentState) {
-        startRecordingSession();
+    if (!currentlyRecording) {
+        // Starting recording - just set recording flag
+        isRecording.set(true);
+        startRecording();
     } else {
-        stopRecordingSession();
+        // Stopping recording - set flag and send recorded data
+        isRecording.set(false);
+        stopRecording();
+        
+        // After stopping, send the recorded conversation from local storage
+        // This only happens when we stop recording
+        setTimeout(() => {
+            getRecordedConversations();
+        }, 300); // Small delay to ensure recording is fully processed
     }
 }
 

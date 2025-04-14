@@ -10,12 +10,11 @@ export const createWebSocketConnection = (url, messageHandler) => {
 
     ws.onmessage = (event) => {
         console.log('WebSocket message received, type:', typeof event.data);
-        console.log('WebSocket message content:', event.data);
         
         try {
             const data = JSON.parse(event.data);
-            console.log('Parsed data:', data);
             
+            // LOCAL PROCESSING ONLY - process all messages for UI display
             if (data.type === 'notification' && typeof messageHandler.onNotification === 'function') {
                 messageHandler.onNotification(data);
             } else if (data.type === 'subtitles' && typeof messageHandler.onSubtitles === 'function') {
@@ -25,8 +24,7 @@ export const createWebSocketConnection = (url, messageHandler) => {
             } else if (data.type === 'transfer_status' && typeof messageHandler.onTransferStatus === 'function') {
                 messageHandler.onTransferStatus(data);
             } else if (data.type === 'record_data') {
-                console.log('Received record data');
-                // No handler needed as this is likely sent from this client to the server
+                console.log('Received record data message');
             } else {
                 console.log('Unknown message type:', data.type);
             }
@@ -44,17 +42,34 @@ export const createWebSocketConnection = (url, messageHandler) => {
         console.log('WebSocket connection closed');
     };
 
+    // Return connection object with sendMessage method
     return {
-        close: () => {
-            ws.close();
-        },
-        ws: ws,  // Return the WebSocket instance
+        ws,
         sendMessage: (message) => {
             if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(message));
-                return true;
+                // CRITICAL: Only send record_data messages to the bluetooth bridge
+                // This is where we filter what goes to the bluetooth bridge
+                if (message.type === 'record_data' && message.command === 'send_conversation') {
+                    console.log('Sending recorded conversation to bluetooth bridge');
+                    ws.send(JSON.stringify(message));
+                } 
+                // Allow specific control messages to pass through
+                else if (message.type === 'record') {
+                    console.log('Sending record command');
+                    ws.send(JSON.stringify(message));
+                }
+                // Block all other message types from being sent to the bridge
+                else {
+                    console.log('Blocking message type from bluetooth bridge:', message.type);
+                }
+            } else {
+                console.error('WebSocket not connected');
             }
-            return false;
+        },
+        close: () => {
+            if (ws.readyState !== WebSocket.CLOSED) {
+                ws.close();
+            }
         }
     };
-}
+};

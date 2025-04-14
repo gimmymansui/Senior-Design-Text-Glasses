@@ -4,12 +4,9 @@
     import { addSubtitle } from "$lib/subtitles";
     import { addNotification } from "$lib/notification";
     import { toggleRecording, setRecording } from "$lib/record";
+    import { websocketConnection } from "$lib/stores/websocket-store";
 
     const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
-    
-    // Add a store to hold the WebSocket connection
-    import { writable } from 'svelte/store';
-    export const websocketConnection = writable(null);
 
     onMount(() => {
       console.log('Mounting WebSocket manager');
