@@ -201,10 +201,20 @@ function sendToWebSocket(message) {
 bleno.on('stateChange', (state) => {
     console.log(`BLE state changed to: ${state}`);
     if (state === 'poweredOn') {
-        console.log(`Starting BLE advertising as '${DEVICE_NAME}'...`);
-        bleno.startAdvertising(DEVICE_NAME, [commandService.uuid], (err) => {
-            if (err) {
-                console.error("Advertising failed:", err);
+        console.log("Setting BLE services...");
+        // Set services before starting advertising
+        bleno.setServices([commandService], (error) => {
+            if(error) {
+                console.error("Setting services failed:", error);
+            } else {
+                 console.log("Services set successfully. Starting advertising...");
+                 // Start advertising only after services are set
+                 bleno.startAdvertising(DEVICE_NAME, [commandService.uuid], (err) => {
+                     if (err) {
+                         console.error("Advertising failed:", err);
+                     }
+                     // Advertising start success/failure is logged in the 'advertisingStart' event handler
+                 });
             }
         });
     } else {
@@ -219,13 +229,15 @@ bleno.on('advertisingStart', (err) => {
         console.log(` Service UUID: ${SERVICE_UUID}`);
         console.log(` Command Characteristic UUID: ${COMMAND_CHARACTERISTIC_UUID}`);
         console.log(` Data Transfer Characteristic UUID: ${DATA_TRANSFER_CHARACTERISTIC_UUID}`);
-        bleno.setServices([commandService], (error) => {
-            if(error) {
-                console.error("Setting services failed:", error)
-            } else {
-                 console.log("Services set successfully.");
-            }
-        });
+        console.log('Waiting for BLE connections...');
+        // **setServices call was moved to 'stateChange' handler**
+        // bleno.setServices([commandService], (error) => {
+        //     if(error) {
+        //         console.error("Setting services failed:", error)
+        //     } else {
+        //          console.log("Services set successfully.");
+        //     }
+        // });
     } else {
         console.error('BLE advertising failed to start:', err);
     }

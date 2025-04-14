@@ -9,6 +9,7 @@ class BluetoothHandler {
         this.device = null;
         this.server = null;
         this.service = null;
+        this.commandCharacteristic = null;
         this.isConnected = false;
         
         // UUIDs should match those in bluetooth_bridge.js
@@ -48,6 +49,9 @@ class BluetoothHandler {
             this.server = await this.device.gatt.connect();
             this.service = await this.server.getPrimaryService(this.SERVICE_UUID);
             
+            // Get the command characteristic
+            this.commandCharacteristic = await this.service.getCharacteristic(this.COMMAND_CHARACTERISTIC_UUID);
+
             // Set up data transfer characteristic listener
             const dataCharacteristic = await this.service.getCharacteristic(this.DATA_TRANSFER_UUID);
             await dataCharacteristic.startNotifications();
