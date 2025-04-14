@@ -7,7 +7,9 @@ const util = require('util');
 const WEBSOCKET_URI = "ws://localhost:8080"; // Connect to your existing server
 const SERVICE_UUID = "5f47a3c0-4f1a-4a69-9f6d-1b2c3d4e5f6a";
 const COMMAND_CHARACTERISTIC_UUID = "7d8e1b3c-6a7b-4e8f-9a0b-1c2d3e4f5a6b";
-const DATA_TRANSFER_CHARACTERISTIC_UUID = "8d7f1b3c-6a7b-4e8f-9a0b-1c2d3e4f5a6b"; // New UUID for data transfer
+// Correct Data Transfer UUID - ensure this matches the client (bluetooth.js)
+const DATA_TRANSFER_UUID = "8f5b1d6a-4e2b-4f3a-8e7d-2a3c4e5f6b7c"; 
+// const DATA_TRANSFER_CHARACTERISTIC_UUID = "8d7f1b3c-6a7b-4e8f-9a0b-1c2d3e4f5a6b"; // Removed incorrect/old UUID
 const EXPECTED_BLE_COMMAND = "record";
 const WEBSOCKET_MESSAGE = { type: "record" };
 const DEVICE_NAME = "TextGlasses Gateway (Node)";
@@ -55,7 +57,7 @@ class CommandCharacteristic extends bleno.Characteristic {
 class DataTransferCharacteristic extends bleno.Characteristic {
     constructor() {
         super({
-            uuid: DATA_TRANSFER_CHARACTERISTIC_UUID,
+            uuid: DATA_TRANSFER_UUID,
             properties: ['notify', 'write'],
             value: null,
             descriptors: [
@@ -228,7 +230,8 @@ bleno.on('advertisingStart', (err) => {
         console.log('BLE advertising started successfully.');
         console.log(` Service UUID: ${SERVICE_UUID}`);
         console.log(` Command Characteristic UUID: ${COMMAND_CHARACTERISTIC_UUID}`);
-        console.log(` Data Transfer Characteristic UUID: ${DATA_TRANSFER_CHARACTERISTIC_UUID}`);
+        // Use the correct constant for logging
+        console.log(` Data Transfer Characteristic UUID: ${DATA_TRANSFER_UUID}`); 
         console.log('Waiting for BLE connections...');
         // **setServices call was moved to 'stateChange' handler**
         // bleno.setServices([commandService], (error) => {
