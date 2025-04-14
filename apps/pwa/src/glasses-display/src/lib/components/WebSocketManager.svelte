@@ -6,6 +6,10 @@
     import { toggleRecording, setRecording } from "$lib/record";
 
     const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080";
+    
+    // Add a store to hold the WebSocket connection
+    import { writable } from 'svelte/store';
+    export const websocketConnection = writable(null);
 
     onMount(() => {
       console.log('Mounting WebSocket manager');
@@ -26,11 +30,33 @@
         onRecord: (data) => {
           toggleRecording();
           console.log("Record switch triggered: Recording...")
+        },
+        // Add handler for transfer status responses
+        onTransferStatus: (data) => {
+          console.log('Transfer status:', data.status);
+          if (data.status === 'failed') {
+            console.error('Transfer failed:', data.error);
+          }
         }
       };
 
-      const { close } = createWebSocketConnection(WS_URL, messageHandler);
-      return close;
+      const connection = createWebSocketConnection(WS_URL, messageHandler);
+      websocketConnection.set(connection);
+      
+      return () => {
+        connection.close();
+        websocketConnection.set(null);
+      };
     });
-
+    
+    // Export a function to send messages through the WebSocket
+    export function sendMessage(message) {
+      websocketConnection.subscribe(conn => {
+        if (conn && conn.ws && conn.ws.readyState === WebSocket.OPEN) {
+          conn.ws.send(JSON.stringify(message));
+        } else {
+          console.error('WebSocket not connected');
+        }
+      })();
+    }
 </script>

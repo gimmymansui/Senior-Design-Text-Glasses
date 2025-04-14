@@ -22,6 +22,11 @@ export const createWebSocketConnection = (url, messageHandler) => {
                 messageHandler.onSubtitles(data);
             } else if (data.type === 'record' && typeof messageHandler.onRecord === 'function') {
                 messageHandler.onRecord(data);
+            } else if (data.type === 'transfer_status' && typeof messageHandler.onTransferStatus === 'function') {
+                messageHandler.onTransferStatus(data);
+            } else if (data.type === 'record_data') {
+                console.log('Received record data');
+                // No handler needed as this is likely sent from this client to the server
             } else {
                 console.log('Unknown message type:', data.type);
             }
@@ -43,6 +48,13 @@ export const createWebSocketConnection = (url, messageHandler) => {
         close: () => {
             ws.close();
         },
-        ws: ws  // Return the WebSocket instance
+        ws: ws,  // Return the WebSocket instance
+        sendMessage: (message) => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+                return true;
+            }
+            return false;
+        }
     };
 }

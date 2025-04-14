@@ -4,45 +4,14 @@ const WebSocket = require('ws');
 const util = require('util');
 
 // --- Configuration ---
-const WEBSOCKET_URI = "ws://localhost:8080";
-const SERVICE_UUID = "5f47a3c0-4f1a-4a69-9f6d-1b2c3d4e5f6a"; // Use the same UUIDs
+const WEBSOCKET_URI = "ws://localhost:8080"; // Connect to your existing server
+const SERVICE_UUID = "5f47a3c0-4f1a-4a69-9f6d-1b2c3d4e5f6a";
 const COMMAND_CHARACTERISTIC_UUID = "7d8e1b3c-6a7b-4e8f-9a0b-1c2d3e4f5a6b";
+const DATA_TRANSFER_CHARACTERISTIC_UUID = "8d7f1b3c-6a7b-4e8f-9a0b-1c2d3e4f5a6b"; // New UUID for data transfer
 const EXPECTED_BLE_COMMAND = "record";
-const WEBSOCKET_MESSAGE = { type: "record" }; // Message to send
+const WEBSOCKET_MESSAGE = { type: "record" };
 const DEVICE_NAME = "TextGlasses Gateway (Node)";
 // --- End Configuration ---
-
-// --- WebSocket Logic ---
-function sendToWebSocket(message) {
-    console.log(`Attempting to connect to WebSocket: ${WEBSOCKET_URI}`);
-    const ws = new WebSocket(WEBSOCKET_URI);
-
-    ws.on('open', function open() {
-        console.log('WebSocket connection established.');
-        try {
-            const messageString = JSON.stringify(message);
-            ws.send(messageString);
-            console.log(`Sent message to WebSocket: ${messageString}`);
-        } catch (err) {
-            console.error('Error sending message via WebSocket:', err);
-        } finally {
-             // Close connection after sending (optional, depends on your ws server needs)
-             ws.close();
-        }
-    });
-
-    ws.on('close', function close() {
-        console.log('WebSocket connection closed.');
-    });
-
-    ws.on('error', function error(err) {
-        console.error(`WebSocket connection error: ${err.message}`);
-        // Attempt to close if an error occurs before 'open' or during communication
-        if (ws.readyState !== WebSocket.CLOSED) {
-            ws.close();
-        }
-    });
-}
 
 // --- BLE Characteristic Logic ---
 class CommandCharacteristic extends bleno.Characteristic {
@@ -82,11 +51,11 @@ class CommandCharacteristic extends bleno.Characteristic {
     }
 }
 
-// Add a new characteristic for data transfer
+// Add data transfer characteristic
 class DataTransferCharacteristic extends bleno.Characteristic {
     constructor() {
         super({
-            uuid: '8f5b1d6a-4e2b-4f3a-8e7d-2a3c4e5f6b7c', // Use a proper UUID
+            uuid: DATA_TRANSFER_CHARACTERISTIC_UUID,
             properties: ['notify', 'write'],
             value: null,
             descriptors: [
@@ -100,26 +69,38 @@ class DataTransferCharacteristic extends bleno.Characteristic {
     }
 
     onSubscribe(maxValueSize, updateValueCallback) {
+        console.log('Client subscribed to data transfer');
         this.updateValueCallback = updateValueCallback;
         return this.RESULT_SUCCESS;
     }
 
     onUnsubscribe() {
+        console.log('Client unsubscribed from data transfer');
         this.updateValueCallback = null;
         return this.RESULT_SUCCESS;
     }
 
-    // Method to send data chunks
     sendData(data) {
-        if (!this.updateValueCallback) return;
+        if (!this.updateValueCallback) {
+            console.log('No BLE client subscribed for notifications');
+            return false;
+        }
         
-        // Break data into chunks (BLE has packet size limitations)
-        const chunkSize = 512; // Adjust based on your needs
-        const dataBuffer = Buffer.from(data);
-        
-        for (let i = 0; i < dataBuffer.length; i += chunkSize) {
-            const chunk = dataBuffer.slice(i, i + chunkSize);
-            this.updateValueCallback(chunk);
+        try {
+            // Break data into chunks (BLE has packet size limitations)
+            const dataBuffer = Buffer.from(data);
+            const chunkSize = 512; // Adjust based on your needs
+            
+            for (let i = 0; i < dataBuffer.length; i += chunkSize) {
+                const chunk = dataBuffer.slice(i, Math.min(i + chunkSize, dataBuffer.length));
+                this.updateValueCallback(chunk);
+            }
+            
+            console.log(`Sent ${dataBuffer.length} bytes of data via BLE`);
+            return true;
+        } catch (error) {
+            console.error('Error sending data via BLE:', error);
+            return false;
         }
     }
 }
@@ -132,6 +113,89 @@ const commandService = new bleno.PrimaryService({
         new DataTransferCharacteristic()
     ]
 });
+
+// Store the data transfer characteristic for easy access
+let dataTransferCharacteristic = null;
+
+// --- WebSocket Client Logic ---
+let webSocketClient = null;
+
+function connectToWebSocket() {
+    console.log(`Connecting to WebSocket server at: ${WEBSOCKET_URI}`);
+    webSocketClient = new WebSocket(WEBSOCKET_URI);
+
+    webSocketClient.on('open', function open() {
+        console.log('Connected to WebSocket server');
+    });
+
+    webSocketClient.on('message', function incoming(message) {
+        try {
+            const parsedMessage = JSON.parse(message.toString());
+            console.log('Received message from WebSocket server:', parsedMessage);
+            
+            if (parsedMessage.type === 'record_data' && parsedMessage.command === 'send_conversation') {
+                console.log('Received conversation data from WebSocket');
+                
+                // Send via BLE if a client is connected
+                if (dataTransferCharacteristic && dataTransferCharacteristic.updateValueCallback) {
+                    const success = dataTransferCharacteristic.sendData(parsedMessage.data);
+                    
+                    // Send status back
+                    const statusResponse = {
+                        type: 'transfer_status',
+                        status: success ? 'sent' : 'failed',
+                        error: success ? null : 'Failed to send via BLE'
+                    };
+                    
+                    webSocketClient.send(JSON.stringify(statusResponse));
+                    console.log('Sent transfer status:', statusResponse.status);
+                } else {
+                    console.error('No BLE client subscribed for notifications');
+                    
+                    // Send error status
+                    webSocketClient.send(JSON.stringify({
+                        type: 'transfer_status',
+                        status: 'failed',
+                        error: 'No BLE client connected'
+                    }));
+                }
+            } else if (parsedMessage.type === 'record') {
+                console.log('Received record command from WebSocket');
+                // Original command handling logic can remain
+            }
+        } catch (error) {
+            console.error('Error processing WebSocket message:', error);
+        }
+    });
+
+    webSocketClient.on('close', function close() {
+        console.log('WebSocket connection closed. Reconnecting in 5 seconds...');
+        setTimeout(connectToWebSocket, 5000);
+    });
+
+    webSocketClient.on('error', function error(err) {
+        console.error(`WebSocket error: ${err.message}`);
+        // Attempt to close if an error occurs
+        if (webSocketClient.readyState !== WebSocket.CLOSED) {
+            webSocketClient.close();
+        }
+    });
+}
+
+// Modified function to send messages through existing connection
+function sendToWebSocket(message) {
+    if (webSocketClient && webSocketClient.readyState === WebSocket.OPEN) {
+        try {
+            const messageString = JSON.stringify(message);
+            webSocketClient.send(messageString);
+            console.log(`Sent message to WebSocket: ${messageString}`);
+        } catch (err) {
+            console.error('Error sending message via WebSocket:', err);
+        }
+    } else {
+        console.error('WebSocket not connected. Message not sent.');
+    }
+}
 
 // --- BLE Advertising and State Management ---
 bleno.on('stateChange', (state) => {
@@ -153,8 +217,8 @@ bleno.on('advertisingStart', (err) => {
     if (!err) {
         console.log('BLE advertising started successfully.');
         console.log(` Service UUID: ${SERVICE_UUID}`);
-        console.log(` Writable Characteristic UUID: ${COMMAND_CHARACTERISTIC_UUID}`);
-        console.log('Waiting for BLE connections and commands...');
+        console.log(` Command Characteristic UUID: ${COMMAND_CHARACTERISTIC_UUID}`);
+        console.log(` Data Transfer Characteristic UUID: ${DATA_TRANSFER_CHARACTERISTIC_UUID}`);
         bleno.setServices([commandService], (error) => {
             if(error) {
                 console.error("Setting services failed:", error)
@@ -167,63 +231,31 @@ bleno.on('advertisingStart', (err) => {
     }
 });
 
-bleno.on('advertisingStop', () => {
-    console.log('BLE advertising stopped.');
-});
-
+// After services are set, store the data transfer characteristic
 bleno.on('servicesSet', (err) => {
-    if(err) console.error('Setting services failed:', err);
-    else console.log('BLE services set.');
-});
-
-bleno.on('accept', (clientAddress) => {
-    console.log(`Accepted connection from: ${clientAddress}`);
-});
-
-bleno.on('disconnect', (clientAddress) => {
-    console.log(`Disconnected from: ${clientAddress}`);
-    // Optional: Restart advertising if needed/allowed by the library state
-    // if (bleno.state === 'poweredOn') {
-    //     bleno.startAdvertising(DEVICE_NAME, [commandService.uuid]);
-    // }
-});
-
-// Modify the WebSocket handler to handle data transfer
-function handleWebSocketConnection(ws) {
-    ws.on('message', function(message) {
-        try {
-            const parsedMessage = JSON.parse(message);
-            if (parsedMessage.type === 'transfer_data') {
-                // Find the data transfer characteristic and send the data
-                const dataCharacteristic = commandService.characteristics
-                    .find(char => char instanceof DataTransferCharacteristic);
-                if (dataCharacteristic) {
-                    dataCharacteristic.sendData(parsedMessage.data);
-                }
+    if (!err) {
+        // Find the DataTransferCharacteristic
+        commandService.characteristics.forEach(char => {
+            if (char instanceof DataTransferCharacteristic) {
+                dataTransferCharacteristic = char;
+                console.log('Data transfer characteristic ready');
             }
-        } catch (err) {
-            console.error('Error processing WebSocket message:', err);
-        }
-    });
-}
+        });
+    }
+});
 
-console.log("Starting BLE WebSocket Gateway (Node.js)...");
-console.log("Ensure you have the necessary permissions (e.g., run with sudo if required).");
-// Platform check (basic)
-if (process.platform === 'win32') {
-    console.error("Warning: bleno is not fully supported on Windows. Use Linux or macOS.");
-} else if (process.platform === 'darwin') {
-     console.log("Running on macOS. Ensure Bluetooth is enabled.");
-} else if (process.platform === 'linux') {
-    console.log("Running on Linux. Ensure Bluetooth daemon is running and you have permissions.");
-}
+// Connect to WebSocket server on startup
+connectToWebSocket();
 
 // Graceful shutdown
 process.on('SIGINT', () => {
     console.log("\nCaught interrupt signal (Ctrl+C). Shutting down.");
     bleno.stopAdvertising(() => {
         console.log("Advertising stopped.");
-        // Allow time for disconnect events if necessary before exiting
+        if (webSocketClient) {
+            webSocketClient.close();
+        }
+        // Allow time for disconnect events before exiting
         setTimeout(() => process.exit(0), 500);
     });
 });

@@ -1,5 +1,6 @@
 import { writable, get } from 'svelte/store';
 import { startRecording, stopRecording } from './subtitles.js';
+import { websocketConnection } from '$lib/components/WebSocketManager.svelte';
 
 export const isRecording = writable(false);
 export const recordingStatus = writable({
@@ -89,19 +90,18 @@ function getRecordedConversations() {
         // Convert to JSON string with proper formatting
         const jsonString = JSON.stringify(latestConversation, null, 2);
         
-        // Send via WebSocket to bluetooth bridge
-        const ws = new WebSocket('ws://localhost:8080');
-        ws.onopen = () => {
-            ws.send(JSON.stringify({
-                type: 'transfer_data',
+        // Send via existing WebSocket
+        const connection = get(websocketConnection);
+        if (connection && connection.sendMessage) {
+            connection.sendMessage({
+                type: 'record_data',
+                command: 'send_conversation',
                 data: jsonString
-            }));
+            });
             console.log('Sent conversation data to bluetooth bridge');
-        };
-        
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
+        } else {
+            console.error('WebSocket connection not available');
+        }
         
         return jsonString;
     } catch (e) {
