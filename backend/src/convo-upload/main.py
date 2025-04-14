@@ -1,7 +1,8 @@
-from fastapi import FastAPI, UploadFile, Form, Query
+from fastapi import FastAPI, UploadFile, Form, Query, Request
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from fastapi import Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 import MySQLdb
 import os
 import yaml
@@ -21,6 +22,19 @@ app = FastAPI(
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+    max_age=600,  # Cache preflight response for 10 minutes
+)
+
+@app.options("/{path:path}")
+async def options_route(request: Request, path: str):
+    return {}
 
 security = HTTPBasic()
 DB_USER = os.getenv("DB_USER", "myuser")  # username
@@ -110,7 +124,7 @@ async def store_conversation(
 
 class SearchRequest(BaseModel):
     user_id: int
-    date: str
+   
 @app.post("/search/",
     response_model=dict,
     summary="Search for a conversation",
@@ -149,15 +163,25 @@ async def search_conversation(username: str = Depends(authenticate), request: Se
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT conversation FROM conversations WHERE user_id = %s AND date = %s",
-            (request.user_id, request.date)
+            "SELECT * FROM conversations WHERE user_id = %s",
+            (request.user_id,)
         )
-        result = cursor.fetchone()
+        results = cursor.fetchall()
 
-        if result:
-            return {"user_id": request.user_id, "date": request.date, "conversation": result[0]}
-        else:
-            return {"message": "No conversation found for the given user_id and date"}
+        if not results:
+            return {"message": "No conversations found for the given user_id"}
+
+        conversations = [
+            {
+                "user_id": row[1],
+                "date": row[2],
+                "month": row[3],
+                "year": row[4],
+                "conversation": row[5]
+            } for row in results
+        ]
+
+        return {"user_id": request.user_id, "conversations": conversations}
 
     except Exception as e:
         return {"error": str(e)}
