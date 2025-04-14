@@ -93,26 +93,50 @@ class DataTransferCharacteristic extends bleno.Characteristic {
             return false;
         }
 
+        console.log('--- Preparing data for BLE transmission ---');
+        console.log(`Original data length: ${data.length} bytes`);
+        console.log('--- Will send with SOM/EOM markers ---');
+
         try {
-            const dataBuffer = Buffer.from(data, 'utf8'); // Convert JSON string to buffer
-            // Create the full message with markers
-            const messageBuffer = Buffer.concat([SOM_MARKER, dataBuffer, EOM_MARKER]);
+            const dataBuffer = Buffer.from(data, 'utf8');
+            const chunkSize = 500; // Keep this reduced or adjust as needed
 
-            const chunkSize = 512; // MTU - Characteristic User Description
-            console.log(`Sending message of size ${messageBuffer.length} bytes in chunks of ${chunkSize}`);
+            console.log(`Sending SOM marker (${SOM_MARKER.length} bytes)`);
+            this.updateValueCallback(SOM_MARKER);
 
-            for (let i = 0; i < messageBuffer.length; i += chunkSize) {
-                const chunk = messageBuffer.slice(i, i + chunkSize);
-                console.log(`Sending chunk ${Math.floor(i / chunkSize) + 1}:`, chunk.toString()); // Log chunk content for debug
+            console.log(`Sending data (${dataBuffer.length} bytes) in chunks of max ${chunkSize}...`);
+            for (let i = 0; i < dataBuffer.length; i += chunkSize) {
+                const chunk = dataBuffer.slice(i, Math.min(i + chunkSize, dataBuffer.length));
                 this.updateValueCallback(chunk);
-                // Optional: Add a small delay between chunks if needed
-                // await new Promise(resolve => setTimeout(resolve, 10));
+                // Optional: Add a tiny delay between chunks too, if needed
+                // await new Promise(resolve => setTimeout(resolve, 5)); // Requires making sendData async
             }
 
-            console.log(`Sent total ${messageBuffer.length} bytes of data via BLE`);
-            return true;
+            // *** ADD DELAY BEFORE EOM ***
+            const eomDelayMs = 100; // Start with 100ms, adjust if needed
+            console.log(`Waiting ${eomDelayMs}ms before sending EOM marker...`);
+
+            setTimeout(() => {
+                try {
+                    if (this.updateValueCallback) { // Check if still valid
+                       console.log(`Sending EOM marker (${EOM_MARKER.length} bytes) after delay.`);
+                       this.updateValueCallback(EOM_MARKER);
+                       console.log(`Successfully initiated sending of EOM marker.`);
+                    } else {
+                        console.log('Client unsubscribed before EOM could be sent.');
+                    }
+                } catch (eomError) {
+                     console.error('Error sending EOM marker within setTimeout:', eomError);
+                }
+            }, eomDelayMs);
+            // **************************
+
+
+            console.log(`Successfully initiated sending of ${dataBuffer.length} bytes data (+ markers) via BLE. EOM scheduled.`);
+            return true; // Note: EOM is now sent asynchronously
+
         } catch (error) {
-            console.error('Error sending data via BLE:', error);
+            console.error('Error during data/SOM sending via BLE:', error);
             return false;
         }
     }
