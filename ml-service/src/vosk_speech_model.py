@@ -13,98 +13,73 @@ class AudioTranscriber:
         self.recognizer = KaldiRecognizer(self.model, 16000)
         self.is_running = False
         self.ws_client = None
-        
+
         # Audio settings
         self.sample_rate = 16000
         self.channels = 1
-        self.block_size = 8000
-        
+        self.block_size = 2000  # Smaller block size for faster processing
+
         # Message queue for communication between callback and async loop
         self.message_queue = queue.Queue()
-        
-        # Speaker tracking
-        self.current_speaker = None
-        self.last_voice_activity = 0
-        self.silence_threshold = 1.5  # seconds of silence to trigger speaker change
-        self.speakers = ["Speaker 1", "Speaker 2"]  # Default speakers
+
+        # Speaker tracking (simplified)
+        self.current_speaker = "Speaker 1"
+        self.speakers = ["Speaker 1", "Speaker 2"]
         self.speaker_index = 0
-        
-        # Sentence tracking
-        self.current_sentence_id = 0
-        self.last_was_partial = False
-    
+
     def detect_speaker(self, audio_data):
-        """Simple speaker detection based on silence"""
-        # Calculate audio energy (very basic approach)
+        """Simple speaker detection based on audio energy"""
         energy = np.mean(np.abs(audio_data))
-        
-        current_time = time.time()
-        
-        # If silence detected for long enough, prepare for speaker change
-        if energy < 100:  # Adjust this threshold as needed
-            if self.current_speaker and (current_time - self.last_voice_activity) > self.silence_threshold:
-                # Ready for a potential new speaker
-                self.speaker_index = (self.speaker_index + 1) % len(self.speakers)
-                self.current_speaker = None
-        else:
-            # Voice activity detected
-            self.last_voice_activity = current_time
-            if not self.current_speaker:
-                # New speaker started talking
-                self.current_speaker = self.speakers[self.speaker_index]
-                self.current_sentence_id += 1
-        
-        return self.current_speaker or self.speakers[0]
+
+        # Very simple speaker detection - just to maintain functionality
+        if energy < 100:  # Low energy might indicate silence
+            return self.speakers[self.speaker_index]
+
+        return self.current_speaker
 
     def audio_callback(self, indata, frames, time, status):
         """This is called (from a separate thread) for each audio block."""
         if status:
             print(status)
-        
+
         if self.is_running:
             data = np.frombuffer(indata, dtype=np.int16)
             speaker = self.detect_speaker(data)
-            
+
             if self.recognizer.AcceptWaveform(data.tobytes()):
                 result = json.loads(self.recognizer.Result())
                 if result["text"]:
-                    print(f"Transcribed: {result['text']}")
-                    # Send complete utterance
+                    # Directly send complete utterance without sentence tracking
                     self.message_queue.put({
                         "type": "subtitles",
                         "speakerName": speaker,
                         "text": result["text"],
-                        "isPartial": False,
-                        "sentenceId": self.current_sentence_id
+                        "isPartial": False
                     })
-                    self.last_was_partial = False
             else:
                 partial = json.loads(self.recognizer.PartialResult())
                 if partial["partial"]:
                     partial_text = partial["partial"]
-                    print(f"Partial: {partial_text}")
-                    
-                    # Only send partials if they have content
-                    if partial_text.strip():
-                        self.message_queue.put({
-                            "type": "subtitles",
-                            "speakerName": speaker,
-                            "text": partial_text,
-                            "isPartial": True,
-                            "sentenceId": self.current_sentence_id
-                        })
-                        self.last_was_partial = True
+
+                    # Send all partial results immediately without filtering
+                    self.message_queue.put({
+                        "type": "subtitles",
+                        "speakerName": speaker,
+                        "text": partial_text,
+                        "isPartial": True
+                    })
 
     async def process_message_queue(self):
         """Process messages from the queue in the async context"""
         while self.is_running:
             try:
-                # Check queue for messages
+                # Process messages as quickly as possible
                 while not self.message_queue.empty():
                     message = self.message_queue.get_nowait()
                     if self.ws_client:
                         await self.ws_client.send_message(message)
-                await asyncio.sleep(0.1)  # Small delay to prevent busy waiting
+                # Reduced sleep time for faster processing
+                await asyncio.sleep(0.01)
             except queue.Empty:
                 pass
             except Exception as e:
@@ -114,27 +89,26 @@ class AudioTranscriber:
         """Main transcription loop"""
         self.is_running = True
         self.ws_client = ws_client
-        
+
         try:
             # Start the message processing task
             message_processor = asyncio.create_task(self.process_message_queue())
-            
+
             with sd.InputStream(
                 samplerate=self.sample_rate,
                 channels=self.channels,
                 dtype=np.int16,
                 callback=self.audio_callback,
-                blocksize=2000
+                blocksize=self.block_size
             ):
                 print("Listening... Press Ctrl+C to stop")
                 while self.is_running:
-                    await asyncio.sleep(0.01)
+                    await asyncio.sleep(0.005)  # Reduced sleep time
 
         except Exception as e:
             print(f"Error: {e}")
         finally:
             self.is_running = False
-            # Ensure message processor is cleaned up
             if 'message_processor' in locals():
                 message_processor.cancel()
                 try:
