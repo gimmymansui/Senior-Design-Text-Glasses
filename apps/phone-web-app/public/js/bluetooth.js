@@ -6,21 +6,20 @@
 
 class BluetoothHandler {
     constructor() {
-        // UUIDs based on the Python BLE gateway script
-        this.targetDeviceName = "TextGlasses"; // Keep this or change if your device name differs
-        this.gattServiceUUID = "5f47a3c0-4f1a-4a69-9f6d-1b2c3d4e5f6a"; // SERVICE_UUID from Python script
-        this.commandCharacteristicUUID = "7d8e1b3c-6a7b-4e8f-9a0b-1c2d3e4f5a6b"; // COMMAND_CHARACTERISTIC_UUID from Python script
-        
         this.device = null;
         this.server = null;
         this.service = null;
-        this.commandCharacteristic = null; // Renamed for clarity
         this.isConnected = false;
         
-        // Add event listeners
+        // UUIDs should match those in bluetooth_bridge.js
+        this.SERVICE_UUID = "5f47a3c0-4f1a-4a69-9f6d-1b2c3d4e5f6a";
+        this.COMMAND_CHARACTERISTIC_UUID = "7d8e1b3c-6a7b-4e8f-9a0b-1c2d3e4f5a6b";
+        this.DATA_TRANSFER_UUID = "data-transfer-uuid"; // Match the UUID from bridge
+        
+        // Callbacks
         this.onConnected = null;
         this.onDisconnected = null;
-        this.onDataReceived = null; // Callback for data received via notifications
+        this.onDataReceived = null;
     }
     
     /**
@@ -39,146 +38,57 @@ class BluetoothHandler {
         }
         
         try {
-            // Request device selection dialog - Filter by NAME
-            // Backend also advertises the gattServiceUUID via advertise_ble, 
-            // so filtering by service could be an alternative: { services: [this.gattServiceUUID] }
-            console.log(`Requesting Bluetooth device advertising service "${this.gattServiceUUID}"...`);
             this.device = await navigator.bluetooth.requestDevice({
-                filters: [
-                    { services: [this.gattServiceUUID] } // Filter by advertised service UUID
-                ],
-                optionalServices: [ 
-                    this.gattServiceUUID, // Crucial: Need access to the GATT service
-                    'generic_access'     // Often needed for name/appearance
-                ]
+                filters: [{ name: "TextGlasses Gateway (Node)" }],
+                optionalServices: [this.SERVICE_UUID]
             });
-            console.log('Device selected:', this.device.name);
+
+            this.device.addEventListener('gattserverdisconnected', this.handleDisconnection.bind(this));
             
-            // Set up disconnect listener
-            this.device.addEventListener('gattserverdisconnected', this.handleDisconnect.bind(this));
-            
-            // Connect to GATT server
-            console.log('Connecting to GATT server...');
             this.server = await this.device.gatt.connect();
-            console.log('Connected to GATT server.');
+            this.service = await this.server.getPrimaryService(this.SERVICE_UUID);
             
-            // Get the primary service defined in the backend's GATT setup
-            console.log('Getting primary service:', this.gattServiceUUID);
-            this.service = await this.server.getPrimaryService(this.gattServiceUUID);
-            console.log('Got service.');
-            
-            // Get the specific command characteristic defined in the Python script
-            console.log('Getting command characteristic:', this.commandCharacteristicUUID);
-            this.commandCharacteristic = await this.service.getCharacteristic(this.commandCharacteristicUUID);
-            console.log('Got characteristic.');
-            
-            // Set up notifications if the characteristic supports it (unlikely for a write-only command char, but check anyway)
-            if (this.commandCharacteristic.properties.notify) {
-                console.log('Starting notifications (if supported)...');
-                await this.commandCharacteristic.startNotifications();
-                this.commandCharacteristic.addEventListener('characteristicvaluechanged', this.handleCharacteristicValueChanged.bind(this));
-                console.log('Notifications started.');
-            } else {
-                 console.log('Characteristic does not support notifications.');
-            }
-            
+            // Set up data transfer characteristic listener
+            const dataCharacteristic = await this.service.getCharacteristic(this.DATA_TRANSFER_UUID);
+            await dataCharacteristic.startNotifications();
+            dataCharacteristic.addEventListener('characteristicvaluechanged', this.handleDataReceived.bind(this));
+
             this.isConnected = true;
-            console.log('Bluetooth connection established and characteristic obtained.');
+            if (this.onConnected) this.onConnected();
             
-            // Trigger connected callback
-            if (this.onConnected) {
-                this.onConnected();
-            }
-            
-            return true; // Indicate success
         } catch (error) {
-            console.error('Bluetooth connection error:', error);
-            this.cleanupConnection(); // Ensure cleanup on error
-            throw error; // Re-throw the error for calling code to handle
+            console.error('Connection error:', error);
+            throw error;
         }
     }
 
-    // Handles characteristic value changes (Notifications)
-    handleCharacteristicValueChanged(event) {
-        const value = event.target.value; // This is a DataView
-        const decoder = new TextDecoder('utf-8');
-        let dataString;
-        try {
-            dataString = decoder.decode(value);
-            console.log('Received data:', dataString);
-
-            // Attempt to parse as JSON (as backend sends JSON)
-            try {
-                 const jsonData = JSON.parse(dataString);
-                 if (this.onDataReceived) {
-                    this.onDataReceived(jsonData); // Pass parsed JSON
-                 }
-            } catch (jsonError) {
-                 console.warn('Received data is not valid JSON:', dataString);
-                 // Optionally pass raw string if needed
-                 // if (this.onDataReceived) {
-                 //    this.onDataReceived(dataString);
-                 // }
-            }
-        } catch (decodeError) {
-            console.error('Error decoding received data:', decodeError, value);
-        }
-    }
-
-    // Handles disconnection event
-    handleDisconnect() {
-        if (!this.isConnected) return; // Avoid duplicate calls
-        console.log('Device disconnected (gattserverdisconnected event).');
-        this.isConnected = false;
-        // Don't null out device/server here, allows for potential reconnection attempts
-        // this.characteristic = null; 
-        // this.service = null;
-        if (this.onDisconnected) {
-            this.onDisconnected();
-        }
-    }
-
-    // Cleans up connection variables
-    cleanupConnection() {
-        if (this.commandCharacteristic) {
-            try {
-                // Remove listener if added
-                if (this.commandCharacteristic.properties.notify) {
-                    this.commandCharacteristic.removeEventListener('characteristicvaluechanged', this.handleCharacteristicValueChanged.bind(this));
-                    // console.log('Stopping notifications...');
-                    // await this.commandCharacteristic.stopNotifications(); // Avoid if causing issues
-                }
-            } catch (e) { console.warn('Error during characteristic cleanup:', e); }
-        }
-
-        if (this.device && this.device.gatt.connected) {
-            console.log('Attempting to disconnect GATT server during cleanup...');
-            this.device.gatt.disconnect();
-        }
-        
-        this.device = null;
-        this.server = null;
-        this.service = null;
-        this.commandCharacteristic = null; // Clear the characteristic
-        this.isConnected = false;
-        console.log('Connection cleaned up.');
-    }
-    
-    /**
-     * Disconnect from the Bluetooth device
-     */
     async disconnect() {
-        console.log('Disconnect requested.');
         if (this.device && this.device.gatt.connected) {
-            console.log('Disconnecting from GATT server...');
-            this.device.gatt.disconnect(); // This should trigger the 'gattserverdisconnected' event
-        } else {
-             console.log('Already disconnected or no device connected.');
-             this.cleanupConnection(); // Ensure state is clean
+            await this.device.gatt.disconnect();
         }
-        // Note: State clearing primarily happens in handleDisconnect & cleanupConnection
     }
-    
+
+    handleDisconnection() {
+        this.isConnected = false;
+        if (this.onDisconnected) this.onDisconnected();
+    }
+
+    // Handle incoming data chunks
+    handleDataReceived(event) {
+        const value = event.target.value;
+        const decoder = new TextDecoder();
+        const data = decoder.decode(value);
+        
+        if (this.onDataReceived) {
+            try {
+                const jsonData = JSON.parse(data);
+                this.onDataReceived(jsonData);
+            } catch (e) {
+                console.error('Error parsing received data:', e);
+            }
+        }
+    }
+
     /**
      * Send data (command) to the Bluetooth device via the command characteristic
      */

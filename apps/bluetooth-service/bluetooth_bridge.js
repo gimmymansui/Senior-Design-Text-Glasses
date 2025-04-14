@@ -82,11 +82,54 @@ class CommandCharacteristic extends bleno.Characteristic {
     }
 }
 
+// Add a new characteristic for data transfer
+class DataTransferCharacteristic extends bleno.Characteristic {
+    constructor() {
+        super({
+            uuid: 'data-transfer-uuid', // Replace with a proper UUID
+            properties: ['notify', 'write'],
+            value: null,
+            descriptors: [
+                new bleno.Descriptor({
+                    uuid: '2901',
+                    value: 'Transfer conversation data'
+                })
+            ]
+        });
+        this.updateValueCallback = null;
+    }
+
+    onSubscribe(maxValueSize, updateValueCallback) {
+        this.updateValueCallback = updateValueCallback;
+        return this.RESULT_SUCCESS;
+    }
+
+    onUnsubscribe() {
+        this.updateValueCallback = null;
+        return this.RESULT_SUCCESS;
+    }
+
+    // Method to send data chunks
+    sendData(data) {
+        if (!this.updateValueCallback) return;
+        
+        // Break data into chunks (BLE has packet size limitations)
+        const chunkSize = 512; // Adjust based on your needs
+        const dataBuffer = Buffer.from(data);
+        
+        for (let i = 0; i < dataBuffer.length; i += chunkSize) {
+            const chunk = dataBuffer.slice(i, i + chunkSize);
+            this.updateValueCallback(chunk);
+        }
+    }
+}
+
 // --- BLE Service Definition ---
 const commandService = new bleno.PrimaryService({
     uuid: SERVICE_UUID,
     characteristics: [
-        new CommandCharacteristic()
+        new CommandCharacteristic(),
+        new DataTransferCharacteristic()
     ]
 });
 
@@ -145,6 +188,24 @@ bleno.on('disconnect', (clientAddress) => {
     // }
 });
 
+// Modify the WebSocket handler to handle data transfer
+function handleWebSocketConnection(ws) {
+    ws.on('message', function(message) {
+        try {
+            const parsedMessage = JSON.parse(message);
+            if (parsedMessage.type === 'transfer_data') {
+                // Find the data transfer characteristic and send the data
+                const dataCharacteristic = commandService.characteristics
+                    .find(char => char instanceof DataTransferCharacteristic);
+                if (dataCharacteristic) {
+                    dataCharacteristic.sendData(parsedMessage.data);
+                }
+            }
+        } catch (err) {
+            console.error('Error processing WebSocket message:', err);
+        }
+    });
+}
 
 console.log("Starting BLE WebSocket Gateway (Node.js)...");
 console.log("Ensure you have the necessary permissions (e.g., run with sudo if required).");

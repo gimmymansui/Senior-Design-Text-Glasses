@@ -72,14 +72,40 @@ function stopRecordingSession() {
         duration: 0,
         savedSessions: session ? [...status.savedSessions, session] : status.savedSessions
     }));
+
+    console.log('getRecordedConversations');
+    console.log(getRecordedConversations());
 }
 
-// Function to get recordings for Bluetooth transfer
-export function getRecordedConversations() {
+// Function to get recordings for Bluetooth transfer and save to file
+function getRecordedConversations() {
     try {
-        return JSON.parse(localStorage.getItem('recordedConversations') || '[]');
+        const conversations = JSON.parse(localStorage.getItem('recordedConversations') || '[]');
+        if (conversations.length === 0) return null;
+        
+        // Get the latest conversation
+        const latestConversation = conversations[conversations.length - 1];
+        
+        // Convert to JSON string with proper formatting
+        const jsonString = JSON.stringify(latestConversation, null, 2);
+        
+        // Send via WebSocket to bluetooth bridge
+        const ws = new WebSocket('ws://localhost:8080');
+        ws.onopen = () => {
+            ws.send(JSON.stringify({
+                type: 'transfer_data',
+                data: jsonString
+            }));
+            console.log('Sent conversation data to bluetooth bridge');
+        };
+        
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+        
+        return jsonString;
     } catch (e) {
         console.error('Failed to retrieve from localStorage:', e);
-        return [];
+        return null;
     }
 }

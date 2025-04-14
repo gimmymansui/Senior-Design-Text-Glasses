@@ -62,6 +62,12 @@
         Status: Disconnected
     </div>
     
+    <!-- Add this div for displaying received data -->
+    <div id="receivedDataArea" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px; max-height: 300px; overflow-y: auto;">
+        <h3>Received Conversation Data:</h3>
+        <pre id="conversationData">No data received yet</pre>
+    </div>
+    
     <!-- Include the main Bluetooth handler script -->
     <script src="./js/bluetooth.js"></script> 
     
@@ -70,6 +76,7 @@
         const disconnectBtn = document.getElementById('disconnectBtn');
         const recordBtn = document.getElementById('recordBtn');
         const statusArea = document.getElementById('statusArea');
+        const conversationData = document.getElementById('conversationData');
 
         function updateStatus(message) {
             console.log("UI Status:", message);
@@ -139,10 +146,24 @@
                 recordBtn.disabled = true;
             };
 
-            // Optional: Handle data received (if gateway sends notifications in the future)
-            // window.bluetoothHandler.onDataReceived = (data) => {
-            //     updateStatus(`Data received: ${JSON.stringify(data)}`);
-            // };
+            // Add handler for received data
+            window.bluetoothHandler.onDataReceived = (data) => {
+                updateStatus('Received conversation data');
+                // Pretty print the JSON data
+                conversationData.textContent = JSON.stringify(data, null, 2);
+                
+                // Optionally save the received data
+                const blob = new Blob([JSON.stringify(data, null, 2)], 
+                                    { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'received_conversation.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
         } else {
              updateStatus("Error: bluetoothHandler instance not found. Check script loading.");
         }
