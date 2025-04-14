@@ -87,7 +87,7 @@ class DataTransferCharacteristic extends bleno.Characteristic {
         return this.RESULT_SUCCESS;
     }
 
-    sendData(data) {
+    async sendData(data) {
         if (!this.updateValueCallback) {
             console.log('No BLE client subscribed for notifications');
             return false;
@@ -95,24 +95,28 @@ class DataTransferCharacteristic extends bleno.Characteristic {
 
         console.log('--- Preparing data for BLE transmission ---');
         console.log(`Original data length: ${data.length} bytes`);
-        console.log('--- Sending with SOM/EOM markers (no artificial delay) ---');
+        console.log('--- Sending with SOM/EOM markers (with inter-chunk delay) ---');
 
         try {
             const dataBuffer = Buffer.from(data, 'utf8');
-            const chunkSize = 500; // Keep this reduced or adjust as needed
+            const chunkSize = 200; // Reduced chunk size
+            const delayMs = 10; // Delay between data chunks
 
             console.log(`Sending SOM marker (${SOM_MARKER.length} bytes)`);
             this.updateValueCallback(SOM_MARKER);
+            // Optional short delay after SOM if needed
+            // await new Promise(resolve => setTimeout(resolve, 5));
 
-            console.log(`Sending data (${dataBuffer.length} bytes) in chunks of max ${chunkSize}...`);
+            console.log(`Sending data (${dataBuffer.length} bytes) in chunks of max ${chunkSize} with ${delayMs}ms delay...`);
             for (let i = 0; i < dataBuffer.length; i += chunkSize) {
                 const chunk = dataBuffer.slice(i, Math.min(i + chunkSize, dataBuffer.length));
+                console.log(` Sending chunk ${Math.floor(i / chunkSize) + 1} (${chunk.length} bytes)...`);
                 this.updateValueCallback(chunk);
-                // Optional: Add tiny delay *between* chunks if absolutely necessary, but try without first
-                // await new Promise(resolve => setTimeout(resolve, 5)); // Requires making sendData async
+                // Wait for the delay before sending the next chunk
+                await new Promise(resolve => setTimeout(resolve, delayMs)); 
             }
 
-            // Send EOM immediately after data chunks
+            // Send EOM immediately after the last data chunk + delay
             console.log(`Sending EOM marker (${EOM_MARKER.length} bytes) immediately.`);
             if (this.updateValueCallback) { // Check if still valid
                 this.updateValueCallback(EOM_MARKER);
