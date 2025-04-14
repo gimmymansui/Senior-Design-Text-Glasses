@@ -30,7 +30,7 @@ class Advertisement(dbus.service.Object):
         self.manufacturer_data = None
         self.solicit_uuids = None
         self.service_data = None
-        self.local_name = "OptiViewGlasses" # Optional: Set a name for the advertisement
+        self.local_name = "TextGlasses" # Ensure this matches the desired name
         self.include_tx_power = False
         self.data = None
         dbus.service.Object.__init__(self, bus, self.path)

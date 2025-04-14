@@ -42,31 +42,118 @@
     </style>
 </head>
 <body>
-    <h1>Bluetooth Test Page</h1>
+    <h1>Bluetooth Gateway Test Page</h1>
     
     <div class="instructions">
         <h2>Instructions</h2>
-        <p>This page allows you to test the Bluetooth functionality of the Text Glasses application.</p>
         <ol>
-            <li>Make sure your Bluetooth device is powered on and in pairing mode</li>
-            <li>Click the "Start Bluetooth Test" button below</li>
-            <li>Follow the prompts to select and connect to your device</li>
-            <li>Use the test panel that appears to test connection, recording, and saving</li>
+            <li>Ensure the Node.js BLE Gateway (`bluetooth_bridge.js`) is running.</li>
+            <li>Click "Connect" and select the "TextGlasses Gateway (Node)" device from the browser prompt.</li>
+            <li>Once connected, you can click "Send Record Command".</li>
+            <li>Click "Disconnect" to end the session.</li>
         </ol>
     </div>
     
-    <button id="startTest">Start Bluetooth Test</button>
+    <button id="connectBtn">Connect to Gateway</button>
+    <button id="disconnectBtn" disabled>Disconnect</button>
+    <button id="recordBtn" disabled>Send Record Command</button>
     
-    <script type="module">
-        import { initBluetoothTest } from './js/tests/test-bluetooth.js';
-        
-        document.getElementById('startTest').addEventListener('click', () => {
-            // Initialize the Bluetooth test UI
-            initBluetoothTest();
-            
-            // Hide the start button after initialization
-            document.getElementById('startTest').style.display = 'none';
+    <div id="statusArea" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px; min-height: 50px;">
+        Status: Disconnected
+    </div>
+    
+    <!-- Include the main Bluetooth handler script -->
+    <script src="./js/bluetooth.js"></script> 
+    
+    <script>
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const statusArea = document.getElementById('statusArea');
+
+        function updateStatus(message) {
+            console.log("UI Status:", message);
+            statusArea.textContent = `Status: ${message}`;
+        }
+
+        // --- Event Listeners for Buttons ---
+        connectBtn.addEventListener('click', async () => {
+            if (!window.bluetoothHandler) {
+                updateStatus("Error: Bluetooth handler not loaded.");
+                return;
+            }
+            updateStatus("Attempting to connect...");
+            connectBtn.disabled = true; // Disable connect button during attempt
+            try {
+                await window.bluetoothHandler.connect();
+                // Status update handled by onConnected callback
+            } catch (error) {
+                updateStatus(`Connection failed: ${error.message}`);
+                connectBtn.disabled = false; // Re-enable if connection fails
+            }
         });
+
+        disconnectBtn.addEventListener('click', async () => {
+            if (!window.bluetoothHandler || !window.bluetoothHandler.isConnected) {
+                updateStatus("Not connected.");
+                return;
+            }
+            updateStatus("Disconnecting...");
+            try {
+                await window.bluetoothHandler.disconnect();
+                 // Status update handled by onDisconnected callback
+            } catch (error) {
+                updateStatus(`Disconnection error: ${error.message}`);
+                 // Even if disconnect fails, update UI state as if disconnected
+                 bluetoothHandler.onDisconnected(); 
+            }
+        });
+
+        recordBtn.addEventListener('click', async () => {
+            if (!window.bluetoothHandler || !window.bluetoothHandler.isConnected) {
+                updateStatus("Cannot send command: Not connected.");
+                return;
+            }
+            updateStatus("Sending 'record' command...");
+            try {
+                await window.bluetoothHandler.sendRecordCommand();
+                updateStatus("'record' command sent successfully.");
+            } catch (error) {
+                updateStatus(`Error sending command: ${error.message}`);
+            }
+        });
+
+        // --- Bluetooth Handler Callbacks ---
+        if (window.bluetoothHandler) {
+            window.bluetoothHandler.onConnected = () => {
+                updateStatus("Connected to device: " + (window.bluetoothHandler.device?.name || 'Unknown'));
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                recordBtn.disabled = false;
+            };
+
+            window.bluetoothHandler.onDisconnected = () => {
+                updateStatus("Disconnected.");
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                recordBtn.disabled = true;
+            };
+
+            // Optional: Handle data received (if gateway sends notifications in the future)
+            // window.bluetoothHandler.onDataReceived = (data) => {
+            //     updateStatus(`Data received: ${JSON.stringify(data)}`);
+            // };
+        } else {
+             updateStatus("Error: bluetoothHandler instance not found. Check script loading.");
+        }
+        
+         // Initial state check in case the page reloads while connected (unlikely with BLE)
+         if (window.bluetoothHandler && window.bluetoothHandler.isConnected) {
+              window.bluetoothHandler.onConnected();
+         } else {
+              window.bluetoothHandler.onDisconnected(); // Set initial UI state
+         }
+
     </script>
 </body>
 </html>
