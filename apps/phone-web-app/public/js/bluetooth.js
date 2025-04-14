@@ -11,7 +11,7 @@ class BluetoothHandler {
         this.service = null;
         this.commandCharacteristic = null;
         this.isConnected = false;
-        this.dataBuffer = ""; // Add buffer for incoming data chunks
+        this.rawDataBuffer = []; // Change dataBuffer to hold ArrayBuffer chunks
         
         // UUIDs should match those in bluetooth_bridge.js
         this.SERVICE_UUID = "5f47a3c0-4f1a-4a69-9f6d-1b2c3d4e5f6a";
@@ -75,59 +75,92 @@ class BluetoothHandler {
 
     handleDisconnection() {
         this.isConnected = false;
-        this.dataBuffer = ""; // Clear buffer on disconnect
+        this.rawDataBuffer = []; // Clear buffer on disconnect
         if (this.onDisconnected) this.onDisconnected();
     }
 
-    // Handle incoming data chunks using SOM and EOM markers
+    // Helper function to concatenate ArrayBuffers
+    _concatArrayBuffers(buffers) {
+        let totalLength = buffers.reduce((acc, val) => acc + val.byteLength, 0);
+        let result = new Uint8Array(totalLength);
+        let offset = 0;
+        for (let buffer of buffers) {
+            result.set(new Uint8Array(buffer), offset);
+            offset += buffer.byteLength;
+        }
+        return result.buffer; // Return as ArrayBuffer
+    }
+
+    // Handle incoming raw data chunks using SOM and EOM markers
     handleDataReceived(event) {
-        const value = event.target.value; // This is an ArrayBuffer
+        const chunk = event.target.value; // This is an ArrayBuffer
+        console.log(`Raw BLE chunk received: ${chunk.byteLength} bytes`);
+        this.rawDataBuffer.push(chunk); // Append the raw chunk
+
+        // Combine all buffered chunks
+        const combinedBuffer = this._concatArrayBuffers(this.rawDataBuffer);
+        
+        // Decode the entire combined buffer only when checking
         const decoder = new TextDecoder();
-        const chunk = decoder.decode(value);
-        console.log("Raw BLE chunk received:", JSON.stringify(chunk)); // Log the raw chunk safely
-        this.dataBuffer += chunk; // Append the chunk to the buffer
+        let combinedString = "";
+        try {
+            combinedString = decoder.decode(combinedBuffer);
+        } catch (e) {
+             console.error("Error decoding combined buffer:", e);
+             // Potentially clear buffer if decoding fails irrecoverably
+             // this.rawDataBuffer = []; 
+             return; // Cannot proceed if decoding fails
+        }
 
         const SOM_MARKER = "<<START>>";
         const EOM_MARKER = "<<END>>";
 
-        // Check if the buffer contains both SOM and EOM markers
-        const somIndex = this.dataBuffer.indexOf(SOM_MARKER);
-        const eomIndex = this.dataBuffer.indexOf(EOM_MARKER);
+        // Check if the combined string contains both SOM and EOM markers
+        const somIndex = combinedString.indexOf(SOM_MARKER);
+        const eomIndex = combinedString.indexOf(EOM_MARKER);
 
         // Ensure SOM is at the beginning and EOM is present *after* SOM
         if (somIndex === 0 && eomIndex > somIndex) {
+            const endMarkerEndIndex = eomIndex + EOM_MARKER.length;
             // Extract the potential message content between markers
-            const potentialMessage = this.dataBuffer.substring(SOM_MARKER.length, eomIndex);
-            console.log("SOM/EOM found. Attempting to parse content:", potentialMessage);
+            const potentialMessage = combinedString.substring(SOM_MARKER.length, eomIndex);
+            console.log("SOM/EOM found in combined string. Attempting to parse content:", potentialMessage);
 
             // Try to parse the extracted content as JSON
             try {
                 const jsonData = JSON.parse(potentialMessage);
-                // If parsing is successful, we have the complete JSON object
                 console.log("Complete JSON received and parsed successfully:", jsonData);
                 if (this.onDataReceived) {
                     this.onDataReceived(jsonData);
                 }
-                // Clear the buffer *after* successfully processing the message
-                // Remove the processed message including markers
-                this.dataBuffer = this.dataBuffer.substring(eomIndex + EOM_MARKER.length);
-                console.log("Buffer cleared. Remaining buffer content:", JSON.stringify(this.dataBuffer));
+                
+                // Clear the processed message (including markers) from the raw buffer
+                // Slice the combined buffer *after* the EOM marker
+                const remainingBuffer = combinedBuffer.slice(endMarkerEndIndex);
+                // Reset the raw buffer - if remainingBuffer has data, start with that
+                this.rawDataBuffer = remainingBuffer.byteLength > 0 ? [remainingBuffer] : [];
+                console.log(`Buffer cleared. Remaining raw buffer size: ${remainingBuffer.byteLength} bytes`);
 
             } catch (e) {
                 // If parsing fails, log the error and the problematic content
                 console.error('JSON parsing failed even after finding SOM/EOM:', e);
                 console.log('Buffer content on failure (between markers):', JSON.stringify(potentialMessage));
-                // Clear the buffer entirely to prevent retrying with potentially corrupted data
-                console.warn("Clearing entire buffer due to parsing error.");
-                this.dataBuffer = "";
+                // Consider clearing the buffer to prevent retrying with corrupted data, 
+                // but maybe the EOM was premature and more data chunks are coming?
+                // For now, let's clear it to avoid loops on definitively bad data.
+                console.warn("Clearing entire raw buffer due to parsing error.");
+                this.rawDataBuffer = []; 
             }
         } else if (eomIndex !== -1 && somIndex > 0) {
             // EOM found but SOM is not at the start - data corruption?
-            console.warn("EOM marker found, but SOM marker is not at the beginning. Possible data corruption. Clearing buffer.");
-            this.dataBuffer = "";
+            console.warn("EOM marker found, but SOM marker is not at the beginning. Possible data corruption. Clearing raw buffer.");
+            this.rawDataBuffer = [];
         } else {
             // Markers not found (or incomplete), wait for more chunks
-            console.log("Received chunk, waiting for complete SOM/EOM markers...");
+            // Only log if the buffer isn't empty, to avoid spamming
+             if (this.rawDataBuffer.length > 0) {
+                console.log("Received chunk, waiting for complete SOM/EOM markers in combined buffer...");
+             }
         }
     }
 

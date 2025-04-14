@@ -169,36 +169,43 @@ function connectToWebSocket() {
         try {
             const parsedMessage = JSON.parse(message.toString());
             console.log('Received message from WebSocket server:', parsedMessage);
-            
-            if (parsedMessage.type === 'record_data' && parsedMessage.command === 'send_conversation') {
-                console.log('Received conversation data from WebSocket');
-                
-                // Send via BLE if a client is connected
-                if (dataTransferCharacteristic && dataTransferCharacteristic.updateValueCallback) {
-                    const success = dataTransferCharacteristic.sendData(parsedMessage.data);
-                    
-                    // Send status back
-                    const statusResponse = {
-                        type: 'transfer_status',
-                        status: success ? 'sent' : 'failed',
-                        error: success ? null : 'Failed to send via BLE'
-                    };
-                    
-                    webSocketClient.send(JSON.stringify(statusResponse));
-                    console.log('Sent transfer status:', statusResponse.status);
+
+            // Only process messages of type 'record_data'
+            if (parsedMessage.type === 'record_data') {
+                 // Further check if the command is to send conversation data
+                 if (parsedMessage.command === 'send_conversation') {
+                    console.log("Processing 'record_data' with command 'send_conversation'");
+                    //console.log('Received conversation data from WebSocket. Data BEFORE sending to BLE:', parsedMessage.data); // Optional: Keep or remove this log
+
+                    // Send via BLE if a client is connected
+                    if (dataTransferCharacteristic && dataTransferCharacteristic.updateValueCallback) {
+                        const success = dataTransferCharacteristic.sendData(parsedMessage.data);
+                        
+                        // Send status back
+                        const statusResponse = {
+                            type: 'transfer_status',
+                            status: success ? 'sent' : 'failed',
+                            error: success ? null : 'Failed to send via BLE'
+                        };
+                        
+                        webSocketClient.send(JSON.stringify(statusResponse));
+                        console.log('Sent transfer status:', statusResponse.status);
+                    } else {
+                        console.error('No BLE client subscribed for notifications');
+                        
+                        // Send error status
+                        webSocketClient.send(JSON.stringify({
+                            type: 'transfer_status',
+                            status: 'failed',
+                            error: 'No BLE client connected'
+                        }));
+                    }
                 } else {
-                    console.error('No BLE client subscribed for notifications');
-                    
-                    // Send error status
-                    webSocketClient.send(JSON.stringify({
-                        type: 'transfer_status',
-                        status: 'failed',
-                        error: 'No BLE client connected'
-                    }));
+                     console.log(`Ignoring 'record_data' message with command: ${parsedMessage.command}`);
                 }
-            } else if (parsedMessage.type === 'record') {
-                console.log('Received record command from WebSocket');
-                // Original command handling logic can remain
+            } else {
+                // Ignore other message types
+                console.log(`Ignoring message with type: ${parsedMessage.type}`);
             }
         } catch (error) {
             console.error('Error processing WebSocket message:', error);

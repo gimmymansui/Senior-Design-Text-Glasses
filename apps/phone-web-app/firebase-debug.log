@@ -1,48 +1,50 @@
-[debug] [2025-04-14T21:16:09.571Z] ----------------------------------------------------------------------
-[debug] [2025-04-14T21:16:09.575Z] Command:       /home/suijs/.nvm/versions/node/v22.14.0/bin/node /home/suijs/.nvm/versions/node/v22.14.0/bin/firebase serve
-[debug] [2025-04-14T21:16:09.576Z] CLI Version:   14.1.0
-[debug] [2025-04-14T21:16:09.576Z] Platform:      linux
-[debug] [2025-04-14T21:16:09.576Z] Node Version:  v22.14.0
-[debug] [2025-04-14T21:16:09.577Z] Time:          Mon Apr 14 2025 17:16:09 GMT-0400 (Eastern Daylight Time)
-[debug] [2025-04-14T21:16:09.577Z] ----------------------------------------------------------------------
+[debug] [2025-04-14T21:39:29.437Z] ----------------------------------------------------------------------
+[debug] [2025-04-14T21:39:29.441Z] Command:       /home/suijs/.nvm/versions/node/v22.14.0/bin/node /home/suijs/.nvm/versions/node/v22.14.0/bin/firebase serve
+[debug] [2025-04-14T21:39:29.442Z] CLI Version:   14.1.0
+[debug] [2025-04-14T21:39:29.443Z] Platform:      linux
+[debug] [2025-04-14T21:39:29.443Z] Node Version:  v22.14.0
+[debug] [2025-04-14T21:39:29.444Z] Time:          Mon Apr 14 2025 17:39:29 GMT-0400 (Eastern Daylight Time)
+[debug] [2025-04-14T21:39:29.444Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2025-04-14T21:16:09.992Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-04-14T21:16:09.993Z] > authorizing via signed-in user (suij2003@gmail.com)
-[debug] [2025-04-14T21:16:09.993Z] [iam] checking project smartglasses-grp31 for permissions ["firebase.projects.get"]
-[debug] [2025-04-14T21:16:09.996Z] Checked if tokens are valid: true, expires at: 1744667611238
-[debug] [2025-04-14T21:16:09.997Z] Checked if tokens are valid: true, expires at: 1744667611238
-[debug] [2025-04-14T21:16:09.998Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31:testIamPermissions [none]
-[debug] [2025-04-14T21:16:09.998Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31:testIamPermissions x-goog-quota-user=projects/smartglasses-grp31
-[debug] [2025-04-14T21:16:10.000Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31:testIamPermissions {"permissions":["firebase.projects.get"]}
-[debug] [2025-04-14T21:16:10.280Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31:testIamPermissions 200
-[debug] [2025-04-14T21:16:10.280Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31:testIamPermissions {"permissions":["firebase.projects.get"]}
-[debug] [2025-04-14T21:16:10.281Z] Checked if tokens are valid: true, expires at: 1744667611238
-[debug] [2025-04-14T21:16:10.281Z] Checked if tokens are valid: true, expires at: 1744667611238
-[debug] [2025-04-14T21:16:10.281Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31 [none]
-[debug] [2025-04-14T21:16:10.379Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31 200
-[debug] [2025-04-14T21:16:10.379Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31 {"projectNumber":"701613950813","projectId":"smartglasses-grp31","lifecycleState":"ACTIVE","name":"smartGlasses-grp31","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-03-25T20:10:15.058874Z"}
+[debug] [2025-04-14T21:39:30.187Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-04-14T21:39:30.187Z] > authorizing via signed-in user (suij2003@gmail.com)
+[debug] [2025-04-14T21:39:30.188Z] [iam] checking project smartglasses-grp31 for permissions ["firebase.projects.get"]
+[debug] [2025-04-14T21:39:30.188Z] Checked if tokens are valid: false, expires at: 1744667611238
+[debug] [2025-04-14T21:39:30.188Z] Checked if tokens are valid: false, expires at: 1744667611238
+[debug] [2025-04-14T21:39:30.188Z] > refreshing access token with scopes: []
+[debug] [2025-04-14T21:39:30.190Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-04-14T21:39:30.190Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-04-14T21:39:30.307Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-04-14T21:39:30.308Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-04-14T21:39:30.314Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31:testIamPermissions [none]
+[debug] [2025-04-14T21:39:30.315Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31:testIamPermissions x-goog-quota-user=projects/smartglasses-grp31
+[debug] [2025-04-14T21:39:30.315Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-04-14T21:39:30.529Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31:testIamPermissions 200
+[debug] [2025-04-14T21:39:30.529Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-04-14T21:39:30.529Z] Checked if tokens are valid: true, expires at: 1744670369308
+[debug] [2025-04-14T21:39:30.529Z] Checked if tokens are valid: true, expires at: 1744670369308
+[debug] [2025-04-14T21:39:30.529Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31 [none]
+[debug] [2025-04-14T21:39:30.630Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31 200
+[debug] [2025-04-14T21:39:30.630Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/smartglasses-grp31 {"projectNumber":"701613950813","projectId":"smartglasses-grp31","lifecycleState":"ACTIVE","name":"smartGlasses-grp31","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-03-25T20:10:15.058874Z"}
 [info] 
 [info] === Serving from '/mnt/d/GitHub/Senior-Design-Text-Glasses/apps/phone-web-app'...
 [info] 
-[debug] [2025-04-14T21:16:10.383Z] Checked if tokens are valid: true, expires at: 1744667611238
-[debug] [2025-04-14T21:16:10.383Z] Checked if tokens are valid: true, expires at: 1744667611238
-[debug] [2025-04-14T21:16:10.383Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/smartglasses-grp31/sites 
-[debug] [2025-04-14T21:16:11.183Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/smartglasses-grp31/sites 200
-[debug] [2025-04-14T21:16:11.183Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/smartglasses-grp31/sites {"sites":[{"name":"projects/smartglasses-grp31/sites/smartglasses-grp31","defaultUrl":"https://smartglasses-grp31.web.app","type":"DEFAULT_SITE"}]}
-[debug] [2025-04-14T21:16:11.184Z] Checked if tokens are valid: true, expires at: 1744667611238
-[debug] [2025-04-14T21:16:11.184Z] Checked if tokens are valid: true, expires at: 1744667611238
-[debug] [2025-04-14T21:16:11.184Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31/webApps/-/config [none]
-[debug] [2025-04-14T21:16:11.705Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31/webApps/-/config 200
-[debug] [2025-04-14T21:16:11.705Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31/webApps/-/config {"projectId":"smartglasses-grp31","storageBucket":"smartglasses-grp31.firebasestorage.app","apiKey":"AIzaSyAsimd5cjQmj108uyMy83oocWvMeokZY8Y","authDomain":"smartglasses-grp31.firebaseapp.com","messagingSenderId":"701613950813"}
-[debug] [2025-04-14T21:16:11.722Z] Checked if tokens are valid: true, expires at: 1744667611238
-[debug] [2025-04-14T21:16:11.722Z] Checked if tokens are valid: true, expires at: 1744667611238
-[debug] [2025-04-14T21:16:11.723Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31 [none]
-[debug] [2025-04-14T21:16:12.013Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31 200
-[debug] [2025-04-14T21:16:12.013Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31 {"projectId":"smartglasses-grp31","projectNumber":"701613950813","displayName":"smartGlasses-grp31","name":"projects/smartglasses-grp31","resources":{"hostingSite":"smartglasses-grp31"},"state":"ACTIVE","etag":"1_6dfe51b6-2ee7-49f0-bb34-b116da0fa5cd"}
+[debug] [2025-04-14T21:39:30.635Z] Checked if tokens are valid: true, expires at: 1744670369308
+[debug] [2025-04-14T21:39:30.635Z] Checked if tokens are valid: true, expires at: 1744670369308
+[debug] [2025-04-14T21:39:30.635Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/smartglasses-grp31/sites 
+[debug] [2025-04-14T21:39:31.034Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/smartglasses-grp31/sites 200
+[debug] [2025-04-14T21:39:31.034Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/smartglasses-grp31/sites {"sites":[{"name":"projects/smartglasses-grp31/sites/smartglasses-grp31","defaultUrl":"https://smartglasses-grp31.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2025-04-14T21:39:31.035Z] Checked if tokens are valid: true, expires at: 1744670369308
+[debug] [2025-04-14T21:39:31.035Z] Checked if tokens are valid: true, expires at: 1744670369308
+[debug] [2025-04-14T21:39:31.035Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31/webApps/-/config [none]
+[debug] [2025-04-14T21:39:31.542Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31/webApps/-/config 200
+[debug] [2025-04-14T21:39:31.542Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31/webApps/-/config {"projectId":"smartglasses-grp31","storageBucket":"smartglasses-grp31.firebasestorage.app","apiKey":"AIzaSyAsimd5cjQmj108uyMy83oocWvMeokZY8Y","authDomain":"smartglasses-grp31.firebaseapp.com","messagingSenderId":"701613950813"}
+[debug] [2025-04-14T21:39:31.559Z] Checked if tokens are valid: true, expires at: 1744670369308
+[debug] [2025-04-14T21:39:31.560Z] Checked if tokens are valid: true, expires at: 1744670369308
+[debug] [2025-04-14T21:39:31.561Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31 [none]
+[debug] [2025-04-14T21:39:31.951Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31 200
+[debug] [2025-04-14T21:39:31.951Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/smartglasses-grp31 {"projectId":"smartglasses-grp31","projectNumber":"701613950813","displayName":"smartGlasses-grp31","name":"projects/smartglasses-grp31","resources":{"hostingSite":"smartglasses-grp31"},"state":"ACTIVE","etag":"1_6dfe51b6-2ee7-49f0-bb34-b116da0fa5cd"}
 [info] i  hosting[smartglasses-grp31]: Serving hosting files from: public {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: \u001b[1mpublic\u001b[22m"}}
 [info] ✔  hosting[smartglasses-grp31]: Local server: http://localhost:5000 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: \u001b[4m\u001b[1mhttp://localhost:5000\u001b[22m\u001b[24m"}}
-[info] i  hosting: 127.0.0.1 - - [14/Apr/2025:21:16:14 +0000] "GET /test.html HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [14/Apr/2025:21:16:14 +0000] \"GET /test.html HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36\""}}
-[info] i  hosting: 127.0.0.1 - - [14/Apr/2025:21:16:14 +0000] "GET /js/bluetooth.js HTTP/1.1" 200 - "http://127.0.0.1:5000/test.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [14/Apr/2025:21:16:14 +0000] \"GET /js/bluetooth.js HTTP/1.1\" 200 - \"http://127.0.0.1:5000/test.html\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36\""}}
-[info] i  hosting: 127.0.0.1 - - [14/Apr/2025:21:24:22 +0000] "GET /test.html HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [14/Apr/2025:21:24:22 +0000] \"GET /test.html HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36\""}}
-[info] i  hosting: 127.0.0.1 - - [14/Apr/2025:21:24:22 +0000] "GET /js/bluetooth.js HTTP/1.1" 200 - "http://127.0.0.1:5000/test.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [14/Apr/2025:21:24:22 +0000] \"GET /js/bluetooth.js HTTP/1.1\" 200 - \"http://127.0.0.1:5000/test.html\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36\""}}
-[info] i  hosting: 127.0.0.1 - - [14/Apr/2025:21:24:22 +0000] "GET /css/normalize.css HTTP/1.1" 200 - "http://127.0.0.1:5000/test.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [14/Apr/2025:21:24:22 +0000] \"GET /css/normalize.css HTTP/1.1\" 200 - \"http://127.0.0.1:5000/test.html\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36\""}}
+[info] i  hosting: 127.0.0.1 - - [14/Apr/2025:21:39:32 +0000] "GET /test.html HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [14/Apr/2025:21:39:32 +0000] \"GET /test.html HTTP/1.1\" 200 - \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36\""}}
+[info] i  hosting: 127.0.0.1 - - [14/Apr/2025:21:39:32 +0000] "GET /js/bluetooth.js HTTP/1.1" 200 - "http://127.0.0.1:5000/test.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36" {"metadata":{"emulator":{"name":"hosting"},"message":"127.0.0.1 - - [14/Apr/2025:21:39:32 +0000] \"GET /js/bluetooth.js HTTP/1.1\" 200 - \"http://127.0.0.1:5000/test.html\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36\""}}
