@@ -158,7 +158,11 @@ async def store_conversation(
             (user_id, date, month, year, combined_text, speaker, start_time, end_time, conversation_metadata),
         )
         conn.commit()
-        return {"message": "Data stored successfully!", "user_id": user_id}
+        
+        # Get the ID of the newly inserted row
+        conversation_id = cursor.lastrowid
+        
+        return {"message": "Data stored successfully!", "user_id": user_id, "conversation_id": conversation_id}
 
     except Exception as e:
         return {"error": str(e)}
