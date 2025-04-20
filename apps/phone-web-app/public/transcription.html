@@ -29,6 +29,14 @@
     <div class="container-page">
         <div class="transcription-title">My Transcriptions</div>
         
+        <div class="upload-container">
+            <label class="upload-btn">
+                <i class="fas fa-upload"></i> Upload Conversation File
+                <input type="file" id="conversationUpload" accept=".json" onchange="handleConversationUpload(event)">
+            </label>
+            <div class="upload-status" id="uploadStatus"></div>
+        </div>
+        
         <div class="transcription-list">
             <div class="transcription-item">
                 <div class="transcription-header">
@@ -92,5 +100,6 @@
     <!-- Application Scripts -->
     <script src="js/auth.js"></script>
     <script src="js/pages.js"></script>
+    <script src="js/upload.js"></script>
 </body>
 </html>

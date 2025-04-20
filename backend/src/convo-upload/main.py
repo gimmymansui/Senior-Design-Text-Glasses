@@ -7,7 +7,10 @@ import MySQLdb
 import os
 import yaml
 import json
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 app = FastAPI(
     title="Conversation Management API",
     description="API for storing and retrieving conversation data",
@@ -66,7 +69,7 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
 @app.post("/store/", 
     response_model=dict,
     summary="Store a conversation",
-    description="Upload and store a conversation for a specific user with date information",
+    description="Upload and store a conversation for a specific user with conversation JSON data",
     responses={
         200: {
             "description": "Successfully stored the conversation",
@@ -92,24 +95,67 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
 async def store_conversation(
     username: str = Depends(authenticate),
     user_id: int = Form(..., description="Unique identifier for the user"),
-    date: str = Form(..., description="Date of the conversation (DD-MM-YYYY)"),
-    month: str = Form(..., description="Month of the conversation"),
-    year: str = Form(..., description="Year of the conversation"),
-    speaker: str = Form(None, description="Speaker of the conversation"),
-    conversation: UploadFile = None  # Remove Form() from UploadFile
+    conversation_file: UploadFile = None
 ):
     conn = None
     cursor = None
     try:
-        content = await conversation.read()
-        text = content.decode("utf-8")
+        # Read and parse the conversation JSON file
+        content = await conversation_file.read()
+        conversation_data = json.loads(content.decode("utf-8"))
+        
+        # Extract information from the JSON file
+        start_time = conversation_data.get("startTime", "")
+        end_time = conversation_data.get("endTime", "")
+
+        if start_time:
+            date_parts = start_time.split("T")[0].split("-")
+            if len(date_parts) == 3:
+                year = date_parts[0]
+                month = date_parts[1]
+                day = date_parts[2]
+                date = f"{day}-{month}-{year}"  # Format as DD-MM-YYYY
+            else:
+                date = ""
+                month = ""
+                year = ""
+        else:
+            date = ""
+            month = ""
+            year = ""
+        
+        # Get the speaker (assuming first transcript has the correct speaker)
+        speaker = ""
+        if "transcripts" in conversation_data and len(conversation_data["transcripts"]) > 0:
+            speaker = conversation_data["transcripts"][0].get("speaker", "")
+        
+        # Combine all text from transcripts
+        combined_text = ""
+        if "transcripts" in conversation_data:
+            for transcript in conversation_data["transcripts"]:
+                if "text" in transcript and "speaker" in transcript:
+                    # Add speaker name before each text segment on a new line
+                    speaker_prefix = f"{transcript['speaker']}: "
+                    if combined_text:  # Add newline if there's already content
+                        combined_text += "\n"
+                    combined_text += speaker_prefix + transcript["text"]
+                elif "text" in transcript:
+                    if combined_text:  # Add newline if there's already content
+                        combined_text += "\n"
+                    combined_text += transcript["text"]
+            combined_text = combined_text.strip()
+        
+        # Store conversation metadata as JSON
+        conversation_metadata = json.dumps(conversation_data)
+        
         # Get a database connection
         conn = get_db_connection()
         cursor = conn.cursor()
-        #execute SQL query
+        
+        # Execute SQL query
         cursor.execute(
-            "INSERT INTO conversations (user_id, date, month, year, conversation, speaker) VALUES (%s, %s, %s, %s, %s, %s)",
-            (user_id, date, month, year, text, speaker),
+            "INSERT INTO conversations (user_id, date, month, year, conversation, speaker, start_time, end_time, raw_data) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (user_id, date, month, year, combined_text, speaker, start_time, end_time, conversation_metadata),
         )
         conn.commit()
         return {"message": "Data stored successfully!", "user_id": user_id}
@@ -179,7 +225,10 @@ async def search_conversation(username: str = Depends(authenticate), request: Se
                 "month": row[3],
                 "year": row[4],
                 "conversation": row[5],
-                "speaker": row[6] if len(row) > 6 else None
+                "speaker": row[6] if len(row) > 6 else None,
+                "start_time": row[7] if len(row) > 7 else None,
+                "end_time": row[8] if len(row) > 8 else None,
+                "raw_data": row[9] if len(row) > 9 else None
             } for row in results
         ]
 

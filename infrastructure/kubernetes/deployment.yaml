@@ -97,13 +97,18 @@ spec:
                 secretKeyRef:
                   name: api-basic-auth
                   key: API_PASSWORD
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openrouter-api-key
+                  key: OPENROUTER_API_KEY
           resources:
             requests:
-              memory: "1Gi"
+              memory: "2Gi"
               cpu: "250m"
               ephemeral-storage: "5Gi"
             limits:
-              memory: "2Gi"
+              memory: "3Gi"
               cpu: "500m"
               ephemeral-storage: "7Gi"
 
