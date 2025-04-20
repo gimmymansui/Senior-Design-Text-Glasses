@@ -95,6 +95,7 @@ async def store_conversation(
     date: str = Form(..., description="Date of the conversation (DD-MM-YYYY)"),
     month: str = Form(..., description="Month of the conversation"),
     year: str = Form(..., description="Year of the conversation"),
+    speaker: str = Form(None, description="Speaker of the conversation"),
     conversation: UploadFile = None  # Remove Form() from UploadFile
 ):
     conn = None
@@ -107,8 +108,8 @@ async def store_conversation(
         cursor = conn.cursor()
         #execute SQL query
         cursor.execute(
-            "INSERT INTO conversations (user_id, date, month, year, conversation) VALUES (%s, %s, %s, %s, %s)",
-            (user_id, date, month, year, text),
+            "INSERT INTO conversations (user_id, date, month, year, conversation, speaker) VALUES (%s, %s, %s, %s, %s, %s)",
+            (user_id, date, month, year, text, speaker),
         )
         conn.commit()
         return {"message": "Data stored successfully!", "user_id": user_id}
@@ -177,7 +178,8 @@ async def search_conversation(username: str = Depends(authenticate), request: Se
                 "date": row[2],
                 "month": row[3],
                 "year": row[4],
-                "conversation": row[5]
+                "conversation": row[5],
+                "speaker": row[6] if len(row) > 6 else None
             } for row in results
         ]
 
