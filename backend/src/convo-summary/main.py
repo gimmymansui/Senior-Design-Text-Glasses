@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File, Request
+from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File, Request, Form
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import os
+from typing import Optional
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -44,14 +45,58 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
         )
     return credentials.username
 
+class SummarizationParams(BaseModel):
+    format: Optional[str] = "general"
+    force_summarize: Optional[bool] = False
+    max_length: Optional[int] = 1000
+    min_length: Optional[int] = 100
+
 @app.post("/summarize/")
-async def summarize(username: str = Depends(authenticate), file: UploadFile = File(...)):
+async def summarize(
+    username: str = Depends(authenticate), 
+    file: UploadFile = File(...),
+    format: Optional[str] = Form("conversation"),
+    force_summarize: Optional[bool] = Form(True),
+    max_length: Optional[int] = Form(1000),
+    min_length: Optional[int] = Form(50)
+):
     try:
         content = await file.read()
         text = content.decode("utf-8")
 
         if not text.strip():
             raise HTTPException(status_code=400, detail="Uploaded file is empty")
+        
+        # Set system prompt for conversation summarization
+        system_prompt = "You are a helpful assistant that specializes in summarizing conversational text, even when it's disjointed, informal, or lacks clear structure."
+        
+        # Default to conversation format for all inputs
+        user_prompt_template = f"""Please summarize the following conversation text. 
+Even if the text appears messy, disjointed, or contains slang/informal language, try to extract the main topics, themes, and any important information.
+
+{"{text}"}
+
+Provide your summary in this structured format:
+
+1. Main Discussion Topics:
+   - List the key subjects or themes that appear in the conversation
+   - Include any specific technologies, projects, or systems mentioned
+
+2. Key Points & Takeaways:
+   - Extract any important information shared
+   - Highlight any problems, solutions, or decisions mentioned
+   
+3. Action Items & Next Steps:
+   - Note any tasks, follow-ups, or things to be done
+   - Include any deadlines or timeframes mentioned
+
+If parts of the text are unintelligible or too messy to interpret, focus on summarizing the parts you can understand and indicate if significant portions were unclear."""
+        
+        # Always force summarize for conversation text
+        system_prompt += " Make your best effort to summarize the text, even if it appears to lack coherence or structure."
+        
+        # Fill in the template with the actual text
+        user_prompt = user_prompt_template.format(text=text)
         
         # Call OpenRouter API for summarization
         headers = {
@@ -62,29 +107,10 @@ async def summarize(username: str = Depends(authenticate), file: UploadFile = Fi
         payload = {
             "model": "anthropic/claude-3-haiku", 
             "messages": [
-                {"role": "system", "content": "You are a helpful assistant that summarizes text in a structured format."},
-                {"role": "user", "content": f"""Please summarize the following text in this structured format:
-                
-1. Summary:
-   - First bullet point
-   - Second bullet point
-   - Additional bullet points as needed
-
-2. Key Insights:
-   - First key insight
-   - Second key insight
-   - Additional insights as needed
-
-3. Action Items:
-   - First recommended action
-   - Second recommended action
-   - Additional actions as needed
-
-Here's the text to summarize:
-
-{text}"""}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
-            "max_tokens": 1000
+            "max_tokens": max_length
         }
         
         response = requests.post(
