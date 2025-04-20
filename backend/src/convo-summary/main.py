@@ -60,7 +60,7 @@ async def summarize(username: str = Depends(authenticate), file: UploadFile = Fi
         }
         
         payload = {
-            "model": "anthropic/claude-3-haiku",  # Updated to correct model ID
+            "model": "anthropic/claude-3-haiku", 
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant that summarizes text in a structured format."},
                 {"role": "user", "content": f"""Please summarize the following text in this structured format:
