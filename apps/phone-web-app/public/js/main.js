@@ -1,3 +1,5 @@
+console.log('--- main.js loaded ---');
+
 /**
  * Main Application JavaScript
  * Handles UI interactions, animations, and state management
@@ -17,6 +19,7 @@ let colorBlindToggle;
 let funkyToggle;
 let bluetoothConnectButton;
 let bluetoothStatus;
+let bluetoothDisconnectButton;
 
 /**
  * Initialize the application when DOM is loaded
@@ -34,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
     funkyToggle = document.getElementById("funkyToggle");
     bluetoothConnectButton = document.getElementById("bluetoothConnect");
     bluetoothStatus = document.getElementById("bluetoothStatus");
+    bluetoothDisconnectButton = document.getElementById("bluetoothDisconnect");
 
     // Set up event listeners
     setupEventListeners();
@@ -43,9 +47,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check for saved preferences
     loadSavedPreferences();
-    
-    // Check auth state for user display
-    checkAuthState();
     
     // Check URL parameters
     checkUrlParameters();
@@ -115,6 +116,41 @@ function setupEventListeners() {
             }
         });
     }
+    
+    // Example: Assuming a login button exists with id="googleLoginButton"
+    const googleLoginBtn = document.getElementById('googleLoginButton');
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', () => {
+            // Ensure authService is available (it should be if auth.js loaded)
+            if (window.authService && typeof window.authService.signInWithGoogle === 'function') {
+                window.authService.signInWithGoogle();
+            } else {
+                console.error("authService.signInWithGoogle is not available!");
+            }
+        });
+    }
+    
+    // Example: Assuming a logout button exists, maybe inside the userInfo element
+    const logoutButton = document.getElementById('logoutButton'); // Give your logout button an ID
+    if (logoutButton) {
+         logoutButton.addEventListener('click', () => {
+            if (window.authService && typeof window.authService.signOutUser === 'function') {
+                window.authService.signOutUser();
+            } else {
+                console.error("authService.signOutUser is not available!");
+            }
+        });
+    }
+    
+     // Example: Link/Button to Transcriptions - Just navigate directly
+    const transcriptionLink = document.getElementById('transcriptionLink'); // Give your link/button an ID
+    if (transcriptionLink) {
+        transcriptionLink.addEventListener('click', (e) => {
+            e.preventDefault(); // Prevent default link behavior if it's an <a> tag
+            console.log("Navigating to transcription.html");
+            window.location.href = 'transcription.html'; // Navigate directly
+        });
+    }
 }
 
 /**
@@ -151,15 +187,21 @@ function handleBackgroundUpload(event) {
  * Toggle the start/listening button state
  */
 function toggleButton() {
-    if (!isRainbow) {
+    if (!window.bluetoothHandler || (!window.bluetoothHandler.isConnected && !isListening)) {
+        alert("Please connect to the Bluetooth glasses first.");
+        return;
+    }
+
+    if (!isListening) {
         buttonText.innerHTML = "Listening ...";
         button.classList.add("listening");
         isRainbow = true;
         isListening = true;
         
-        // If Bluetooth is connected, send record command
-        if (window.bluetoothHandler && window.bluetoothHandler.isConnected) {
+        if (window.bluetoothHandler.isConnected) {
+            console.log("Sending record command (from Start state)...");
             window.bluetoothHandler.sendRecordCommand()
+                .then(() => console.log("Record command sent successfully."))
                 .catch(error => {
                     console.error("Error sending record command:", error);
                     alert("Failed to send record command: " + error.message);
@@ -170,6 +212,16 @@ function toggleButton() {
         button.classList.remove("listening");
         isRainbow = false;
         isListening = false;
+        
+        if (window.bluetoothHandler.isConnected) {
+            console.log("Sending record command (from Listening state)...");
+            window.bluetoothHandler.sendRecordCommand()
+                .then(() => console.log("Record command sent successfully (stop toggle)."))
+                .catch(error => {
+                    console.error("Error sending record command (stop toggle):", error);
+                    alert("Failed to send stop command: " + error.message);
+                });
+        }
     }
 }
 
@@ -186,15 +238,6 @@ function createStars() {
         star.style.left = `${Math.random() * 100}%`;
         star.style.animationDelay = `${Math.random() * 3}s`;
         universe.appendChild(star);
-    }
-}
-
-/**
- * Check authentication before redirecting to transcription
- */
-function checkAuthForTranscription() {
-    if (window.firebaseAuth && window.firebaseAuth.checkAuth('transcription.html')) {
-        window.location.href = 'transcription.html';
     }
 }
 
@@ -222,34 +265,6 @@ function loadSavedPreferences() {
 }
 
 /**
- * Check authentication state and update UI
- */
-function checkAuthState() {
-    if (window.firebase && window.firebase.auth) {
-        firebase.auth().onAuthStateChanged(function(user) {
-            if (user) {
-                // User is signed in
-                const userInfo = document.getElementById('userInfo');
-                const userAvatar = document.getElementById('userAvatar');
-                const userName = document.getElementById('userName');
-                
-                if (userInfo) userInfo.style.display = 'flex';
-                if (userAvatar) userAvatar.src = user.photoURL || 'https://via.placeholder.com/40';
-                if (userName) userName.textContent = user.displayName || user.email;
-                
-                // Close the login modal if it's open
-                const loginModal = document.getElementById('loginModal');
-                if (loginModal) loginModal.style.display = 'none';
-            } else {
-                // User is signed out
-                const userInfo = document.getElementById('userInfo');
-                if (userInfo) userInfo.style.display = 'none';
-            }
-        });
-    }
-}
-
-/**
  * Check URL parameters for specific actions
  */
 function checkUrlParameters() {
@@ -264,40 +279,34 @@ function checkUrlParameters() {
  * Set up Bluetooth handlers
  */
 function setupBluetoothHandlers() {
-    // Update UI if Bluetooth buttons exist
-    if (bluetoothConnectButton && bluetoothStatus) {
-        // Check if Web Bluetooth is supported
-        if (window.bluetoothHandler && window.bluetoothHandler.isSupported()) {
-            bluetoothConnectButton.addEventListener('click', connectBluetooth);
-            
-            // Set up event handlers for the Bluetooth connection
-            window.bluetoothHandler.onConnected = function() {
-                updateBluetoothUI(true);
-            };
-            
-            window.bluetoothHandler.onDisconnected = function() {
-                updateBluetoothUI(false);
-            };
-            
-            window.bluetoothHandler.onDataReceived = function(data) {
-                console.log("Received data from Bluetooth device:", data);
-                try {
-                    const jsonData = JSON.parse(data);
-                    // Handle received data here
-                    if (jsonData.status) {
-                        // Update UI based on status
-                    }
-                } catch (e) {
-                    console.error("Error parsing Bluetooth data:", e);
-                }
-            };
-        } else {
-            // Web Bluetooth not supported
-            bluetoothConnectButton.disabled = true;
-            bluetoothStatus.textContent = "Bluetooth Not Supported";
-            bluetoothStatus.classList.add("not-supported");
-        }
+    if (!window.bluetoothHandler) {
+        console.error("Bluetooth handler not found!");
+        updateBluetoothUI(false);
+        return;
     }
+
+    if (bluetoothConnectButton) {
+        bluetoothConnectButton.addEventListener('click', connectBluetooth);
+    }
+    if (bluetoothDisconnectButton) {
+        bluetoothDisconnectButton.addEventListener('click', disconnectBluetooth);
+    }
+
+    window.bluetoothHandler.onConnected = () => {
+        console.log("Main.js: Received onConnected callback.");
+        updateBluetoothUI(true);
+    };
+
+    window.bluetoothHandler.onDisconnected = () => {
+        console.log("Main.js: Received onDisconnected callback.");
+        updateBluetoothUI(false);
+    };
+    
+    window.bluetoothHandler.onDataReceived = (data) => {
+        console.log("Main.js: Received data:", data);
+    };
+
+    updateBluetoothUI(window.bluetoothHandler.isConnected);
 }
 
 /**
@@ -305,24 +314,19 @@ function setupBluetoothHandlers() {
  */
 async function connectBluetooth() {
     if (!window.bluetoothHandler) return;
+
+    console.log("Attempting to connect Bluetooth...");
+    if (bluetoothStatus) bluetoothStatus.textContent = "Connecting...";
+    bluetoothConnectButton.disabled = true;
+    bluetoothDisconnectButton.style.display = 'none';
     
     try {
-        bluetoothConnectButton.disabled = true;
-        bluetoothStatus.textContent = "Connecting...";
-        
         await window.bluetoothHandler.connect();
-        
-        // UI updates handled by onConnected callback
     } catch (error) {
-        console.error("Bluetooth connection error:", error);
-        bluetoothConnectButton.disabled = false;
-        bluetoothStatus.textContent = "Connection Failed";
-        bluetoothStatus.classList.add("error");
-        
-        setTimeout(() => {
-            bluetoothStatus.textContent = "Disconnected";
-            bluetoothStatus.classList.remove("error");
-        }, 3000);
+        console.error("Bluetooth connection failed:", error);
+        if (bluetoothStatus) bluetoothStatus.textContent = "Connection failed";
+        alert(`Connection failed: ${error.message}`);
+        updateBluetoothUI(false);
     }
 }
 
@@ -330,21 +334,28 @@ async function connectBluetooth() {
  * Update Bluetooth UI elements
  */
 function updateBluetoothUI(isConnected) {
-    if (bluetoothConnectButton && bluetoothStatus) {
-        if (isConnected) {
-            bluetoothConnectButton.textContent = "Disconnect";
-            bluetoothConnectButton.onclick = disconnectBluetooth;
-            bluetoothStatus.textContent = "Connected";
-            bluetoothStatus.classList.add("connected");
-            bluetoothStatus.classList.remove("error", "not-supported");
-        } else {
-            bluetoothConnectButton.textContent = "Connect";
-            bluetoothConnectButton.onclick = connectBluetooth;
-            bluetoothStatus.textContent = "Disconnected";
-            bluetoothStatus.classList.remove("connected", "error", "not-supported");
-        }
-        
+    console.log("Updating Bluetooth UI, isConnected:", isConnected);
+    if (bluetoothStatus) {
+        bluetoothStatus.textContent = isConnected ? `Connected (${window.bluetoothHandler?.device?.name || 'Unknown'})` : "Disconnected";
+    }
+
+    if (bluetoothConnectButton) {
+        bluetoothConnectButton.style.display = isConnected ? 'none' : 'inline-block';
         bluetoothConnectButton.disabled = false;
+    }
+
+    if (bluetoothDisconnectButton) {
+        bluetoothDisconnectButton.style.display = isConnected ? 'inline-block' : 'none';
+    }
+
+    if (button) {
+        button.disabled = !isConnected && !isListening;
+    }
+    
+    if (!isConnected && !isListening && buttonText) {
+         buttonText.innerHTML = "Start";
+         button.classList.remove("listening");
+         isRainbow = false;
     }
 }
 
@@ -352,16 +363,22 @@ function updateBluetoothUI(isConnected) {
  * Disconnect from Bluetooth device
  */
 async function disconnectBluetooth() {
-    if (!window.bluetoothHandler) return;
-    
+    if (!window.bluetoothHandler || !window.bluetoothHandler.isConnected) return;
+
+    console.log("Attempting to disconnect Bluetooth...");
+     if (bluetoothStatus) bluetoothStatus.textContent = "Disconnecting...";
+     bluetoothDisconnectButton.disabled = true;
+     
     try {
-        bluetoothConnectButton.disabled = true;
         await window.bluetoothHandler.disconnect();
-        
-        // UI updates handled by onDisconnected callback
     } catch (error) {
-        console.error("Bluetooth disconnect error:", error);
-        bluetoothConnectButton.disabled = false;
+        console.error("Bluetooth disconnection error:", error);
+        if (bluetoothStatus) bluetoothStatus.textContent = "Disconnection error";
+         alert(`Disconnection error: ${error.message}`);
+         updateBluetoothUI(false); 
+    }
+    finally {
+         bluetoothDisconnectButton.disabled = false;
     }
 }
 
@@ -369,6 +386,5 @@ async function disconnectBluetooth() {
 window.toggleSidebar = toggleSidebar;
 window.closeSidebar = closeSidebar;
 window.toggleButton = toggleButton;
-window.checkAuthForTranscription = checkAuthForTranscription;
 window.connectBluetooth = connectBluetooth;
 window.disconnectBluetooth = disconnectBluetooth;
