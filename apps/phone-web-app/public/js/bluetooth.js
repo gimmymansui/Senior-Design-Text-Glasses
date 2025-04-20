@@ -93,15 +93,33 @@ class BluetoothHandler {
 
     // Handle incoming raw data chunks using SOM and EOM markers
     handleDataReceived(event) {
-        const chunk = event.target.value; // This is an ArrayBuffer
-        console.log(`Raw BLE chunk received: ${chunk.byteLength} bytes`);
-        this.rawDataBuffer.push(chunk); // Append the raw chunk
+        console.log("Received characteristicvaluechanged event. Target value:", event.target.value);
+        const valueDataView = event.target.value; // Value is a DataView
+        
+        // Basic check if valueDataView is valid
+        if (!valueDataView || !(valueDataView instanceof DataView) || valueDataView.buffer == null) {
+            console.error("Invalid DataView received:", valueDataView);
+            return;
+        }
 
-        // Combine all buffered chunks
+        const chunkBuffer = valueDataView.buffer; // Get the underlying ArrayBuffer
+        console.log(`Raw BLE chunk received: ${chunkBuffer.byteLength} bytes (from DataView)`);
+
+        // ---- Log raw bytes of the incoming chunk buffer ----
+        const byteView = new Uint8Array(chunkBuffer);
+        console.log('Chunk Raw Bytes (first 10):', byteView.slice(0, 10)); 
+        console.log('Chunk Raw Bytes (last 10):', byteView.slice(-10)); 
+        // ---- End logging raw bytes ----
+
+        this.rawDataBuffer.push(chunkBuffer); // Append the ArrayBuffer chunk
+
+        // Combine all buffered chunks (ArrayBuffers)
+        console.log(`rawDataBuffer contains ${this.rawDataBuffer.length} chunks.`);
         const combinedBuffer = this._concatArrayBuffers(this.rawDataBuffer);
+        console.log(`Combined buffer size: ${combinedBuffer.byteLength} bytes.`);
         
         // Decode the entire combined buffer only when checking
-        const decoder = new TextDecoder();
+        const decoder = new TextDecoder('utf-8'); // Explicitly use utf-8
         let combinedString = "";
         try {
             combinedString = decoder.decode(combinedBuffer);
@@ -118,6 +136,14 @@ class BluetoothHandler {
         // Check if the combined string contains both SOM and EOM markers
         const somIndex = combinedString.indexOf(SOM_MARKER);
         const eomIndex = combinedString.indexOf(EOM_MARKER);
+
+        // ---- DEBUG LOGGING ----
+        console.log(`Combined String Length: ${combinedString.length}`);
+        // Log only a snippet if it's very long to avoid flooding console
+        const snippet = combinedString.length > 200 ? combinedString.substring(0, 100) + "..." + combinedString.substring(combinedString.length - 100) : combinedString;
+        console.log(`Combined String Snippet: ${JSON.stringify(snippet)}`); // Use JSON.stringify for non-printable chars
+        console.log(`SOM Index: ${somIndex}, EOM Index: ${eomIndex}`);
+        // ---- END DEBUG LOGGING ----
 
         // Ensure SOM is at the beginning and EOM is present *after* SOM
         if (somIndex === 0 && eomIndex > somIndex) {

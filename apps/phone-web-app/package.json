@@ -4,8 +4,8 @@
   "description": "Web application for Text Glasses",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node public/server.js",
+    "dev": "nodemon public/server.js"
   },
   "dependencies": {
     "express": "^4.18.2"

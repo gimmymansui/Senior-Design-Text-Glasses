@@ -4,15 +4,11 @@
     "indexes": "firestore.indexes.json"
   },
   "emulators": {
-    "apphosting": {
-      "port": 5002,
-      "rootDirectory": "./"
-    },
     "auth": {
       "port": 9099
     },
     "firestore": {
-      "port": 8080
+      "port": 8081
     },
     "ui": {
       "enabled": true

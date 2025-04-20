@@ -116,26 +116,13 @@ function initConnectionPage() {
  */
 function initAccountPage() {
     console.log('Account page initialized');
-    // Check if user is authenticated
-    if (window.firebaseAuth && !window.firebaseAuth.isAuthenticated()) {
-        window.location.href = 'index.html?showLogin=true';
-        return;
-    }
+    // Synchronous check REMOVED
+    // if (window.firebaseAuth && !window.firebaseAuth.isAuthenticated()) { ... }
     
-    // Load user profile if authenticated
-    if (window.firebase && window.firebase.auth) {
-        const user = firebase.auth().currentUser;
-        if (user) {
-            // Update profile display
-            const profileName = document.getElementById('profileName');
-            const profileEmail = document.getElementById('profileEmail');
-            const profileImage = document.getElementById('profileImage');
-            
-            if (profileName) profileName.textContent = user.displayName || 'User';
-            if (profileEmail) profileEmail.textContent = user.email;
-            if (profileImage) profileImage.src = user.photoURL || 'https://via.placeholder.com/120';
-        }
-    }
+    // REMOVED profile loading logic - onAuthStateChanged in auth.js handles shared UI updates
+    // if (window.firebase && window.firebase.auth) { ... }
+    
+    // Add any account-page specific logic here that is NOT auth/profile related
 }
 
 /**
@@ -162,14 +149,11 @@ function initSupportPage() {
  */
 function initTranscriptionPage() {
     console.log('Transcription page initialized');
-    // Check if user is authenticated
-    if (window.firebaseAuth && !window.firebaseAuth.isAuthenticated()) {
-        window.location.href = 'index.html?showLogin=true';
-        return;
-    }
+    // Synchronous check REMOVED
+    // if (window.firebaseAuth && !window.firebaseAuth.isAuthenticated()) { ... }
     
-    // Load transcriptions if authenticated
-    // loadTranscriptions();
+    // Add transcription loading logic here, assuming auth is handled by the listener in auth.js
+    // E.g., loadTranscriptions();
 }
 
 // Expose functions for HTML

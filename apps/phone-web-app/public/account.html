@@ -8,8 +8,18 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/pages.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Hide elements critical to the page content while auth is pending */
+        body.auth-pending .container-page { /* Adjust selector if needed */
+            display: none; 
+        }
+        /* Optionally keep background visible */
+        body.auth-pending .universe {
+            display: block; /* Or keep as is */
+        }
+    </style>
 </head>
-<body>
+<body class="auth-pending">
     <div class="universe" id="universe"></div>
     
     <div class="home-toggle" onclick="goHome()">
@@ -86,11 +96,12 @@
         <button class="return-button" onclick="goHome()">Return to Home</button>
     </div>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs - Placed at end of body -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
-    <!-- Application Scripts -->
+    <!-- Application Scripts - auth.js first -->
     <script src="js/auth.js"></script>
     <script src="js/pages.js"></script>
 </body>
