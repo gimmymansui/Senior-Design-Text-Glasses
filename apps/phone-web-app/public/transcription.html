@@ -29,7 +29,8 @@
     <div class="container-page">
         <div class="transcription-title">My Transcriptions</div>
         
-        <div class="transcription-list">
+        <div class="transcription-list" id="transcriptionList">
+            <!-- Transcription items will be loaded here -->
             <div class="transcription-item">
                 <div class="transcription-header">
                     <div class="transcription-title-item">Coffee Shop Meeting</div>
@@ -92,5 +93,135 @@
     <!-- Application Scripts -->
     <script src="js/auth.js"></script>
     <script src="js/pages.js"></script>
+    <script src="js/bluetooth.js"></script> <!-- Ensure bluetooth.js is loaded -->
+
+    <script>
+        // Function called by bluetooth.js when a complete transcription is received
+        async function handleNewTranscription(transcriptionData) {
+            console.log("handleNewTranscription called with data:", transcriptionData);
+
+            if (!transcriptionData || !transcriptionData.transcripts || !transcriptionData.startTime) {
+                console.error("Invalid transcription data received.");
+                return;
+            }
+
+            // --- 1. Get User ID and Auth Token ---
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                console.error("No user logged in. Cannot store transcription.");
+                // Optionally redirect to login or show a message
+                return;
+            }
+            const userId = user.uid; // Use Firebase UID as the user_id
+            let idToken;
+            try {
+                idToken = await user.getIdToken(true); // Force refresh token
+            } catch (error) {
+                console.error("Error getting Firebase ID token:", error);
+                // Handle error appropriately, maybe retry or log out
+                return;
+            }
+
+            // --- 2. Extract and Format Data ---
+            const startTime = new Date(transcriptionData.startTime);
+            const year = startTime.getFullYear().toString();
+            const month = (startTime.getMonth() + 1).toString().padStart(2, '0'); // JS months are 0-indexed
+            const day = startTime.getDate().toString().padStart(2, '0');
+            const date = `${year}-${month}-${day}`; // Format YYYY-MM-DD
+
+            // Concatenate all transcript texts
+            const conversationText = transcriptionData.transcripts
+                .map(t => t.text)
+                .join('\n\n'); // Join parts with double newline for readability, adjust if needed
+
+            // --- 3. Create FormData ---
+            const formData = new FormData();
+            formData.append("user_id", userId); // Send Firebase UID
+            formData.append("date", date);
+            formData.append("month", month);
+            formData.append("year", year);
+
+            // Create a Blob from the conversation text
+            const conversationBlob = new Blob([conversationText], { type: 'text/plain' });
+            formData.append("conversation", conversationBlob, "conversation.txt"); // Field name "conversation", filename "conversation.txt"
+
+            // --- 4. Make API Call ---
+            const API_BASE_URL = '/api'; // Adjust if your API is hosted elsewhere or needs full URL
+            const storeUrl = `${API_BASE_URL}/store/`;
+
+            console.log("Sending transcription to backend:", { userId, date, month, year, textLength: conversationText.length });
+
+            try {
+                const response = await fetch(storeUrl, {
+                    method: 'POST',
+                    headers: {
+                        // No 'Content-Type' needed; browser sets it for FormData
+                        'Authorization': `Bearer ${idToken}` // Use Firebase ID token for auth
+                    },
+                    body: formData
+                });
+
+                const responseData = await response.json(); // Always try to parse JSON
+
+                if (!response.ok) {
+                    console.error(`Error storing transcription: ${response.status} ${response.statusText}`, responseData);
+                    // Show error message to user
+                    alert(`Failed to store transcription: ${responseData.detail || response.statusText}`);
+                    return;
+                }
+
+                console.log("Transcription stored successfully:", responseData);
+                // Optionally, update the UI here by adding the new transcription to the list
+                // addTranscriptionToList(transcriptionData); // Example function call
+                alert("Transcription saved successfully!");
+
+            } catch (error) {
+                console.error("Network or other error storing transcription:", error);
+                // Show error message to user
+                 alert(`Error saving transcription: ${error.message}`);
+            }
+        }
+
+        // Optional: Function to dynamically add the new item to the UI
+        function addTranscriptionToList(transcriptionData) {
+            const list = document.getElementById('transcriptionList');
+            if (!list) return;
+
+            const startTime = new Date(transcriptionData.startTime);
+            const formattedDate = startTime.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            // Generate a simple title, maybe from the first few words or just the time
+            const title = `Transcription from ${startTime.toLocaleTimeString()}`;
+            const previewText = transcriptionData.transcripts.length > 0
+                ? transcriptionData.transcripts[0].text.substring(0, 150) + '...' // Simple preview
+                : 'No text preview available.';
+
+            const newItem = document.createElement('div');
+            newItem.classList.add('transcription-item');
+            newItem.innerHTML = `
+                <div class="transcription-header">
+                    <div class="transcription-title-item">${title}</div>
+                    <div class="transcription-date">${formattedDate}</div>
+                </div>
+                <div class="transcription-preview">
+                    ${previewText}
+                </div>
+            `;
+            // Add to the top of the list
+            list.insertBefore(newItem, list.firstChild);
+        }
+
+        // Example: Trigger storage manually for testing (remove in production)
+        // document.addEventListener('DOMContentLoaded', () => {
+        //    setTimeout(() => {
+        //         const testData = { /* Paste your sample JSON here */ };
+        //         if (firebase.auth().currentUser) {
+        //             handleNewTranscription(testData);
+        //         } else {
+        //             console.log("User not logged in yet for test.");
+        //         }
+        //    }, 5000); // Delay to allow Firebase auth to initialize
+        // });
+
+    </script>
 </body>
 </html>
