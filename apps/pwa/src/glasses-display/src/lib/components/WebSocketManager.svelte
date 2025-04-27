@@ -1,7 +1,7 @@
 <script>
     import { onMount } from "svelte";
     import { createWebSocketConnection } from "$lib/websocket";
-    import { addSubtitle } from "$lib/subtitles";
+    import { handleSubtitleUpdate } from "$lib/subtitles";
     import { addNotification } from "$lib/notification";
     import { toggleRecording, setRecording } from "$lib/record";
     import { websocketConnection } from "$lib/stores/websocket-store";
@@ -12,11 +12,7 @@
       console.log('Mounting WebSocket manager');
       const messageHandler = {
         onSubtitles: (data) => {
-          addSubtitle({
-            speakerName: data.speakerName || "Unknown Speaker",
-            text: data.text || "",
-            sentenceId: data.sentenceId || Date.now()
-          });
+          handleSubtitleUpdate(data);
         },
         onNotification: (data) => {
           addNotification({
