@@ -4,6 +4,7 @@ metadata:
   name: convo-upload-service
 spec:
   type: LoadBalancer
+  loadBalancerIP: 35.221.48.83
   selector:
     app: convo-upload
   ports:
@@ -24,3 +25,4 @@ spec:
       port: 80
       targetPort: 8000
   type: LoadBalancer
+  loadBalancerIP: 34.85.163.145

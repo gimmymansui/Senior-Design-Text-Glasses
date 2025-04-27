@@ -337,6 +337,7 @@
                 formData.append('date', TEST_DATE);
                 formData.append('month', TEST_MONTH);
                 formData.append('year', TEST_YEAR);
+                formData.append('speaker', 'user');  // Add speaker field
                 
                 // Create a file for conversation
                 const conversationBlob = new Blob(
@@ -388,9 +389,15 @@
                 ? transcript.conversation.substring(0, 100) + (transcript.conversation.length > 100 ? '...' : '')
                 : 'No conversation content available';
 
+            // Add speaker information if available
+            const speakerInfo = transcript.speaker 
+                ? `<div class="speaker-info">Speaker: ${transcript.speaker}</div>` 
+                : '';
+
             entry.innerHTML = `
                 <div class="timestamp">${formattedDate}</div>
                 <div class="chat-title">Conversation Transcript</div>
+                ${speakerInfo}
                 <div class="chat-description">${conversationPreview}</div>
             `;
             

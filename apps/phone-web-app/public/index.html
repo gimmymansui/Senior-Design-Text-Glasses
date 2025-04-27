@@ -10,7 +10,20 @@
 <body>
     <div class="background-overlay" id="backgroundOverlay"></div>
     <div class="universe" id="universe"></div>
-    <input type="file" id="backgroundUpload" accept="image/*">
+    
+    <!-- Added Login Button -->
+    <button id="loginButtonTopRight" 
+            class="button top-right-login-button"
+            onclick="authService.signInWithGoogle()"
+            style="position: fixed; top: 15px; right: 15px; z-index: 1001; 
+                   width: auto;
+                   padding: 8px 15px;
+                   margin-bottom: 0;
+                   display: block;">
+        Login
+    </button>
+    
+    <input type="file" id="backgroundUpload" accept="image/*" style="display: none;">
     <div class="background-upload-btn" onclick="document.getElementById('backgroundUpload').click()">
         <div class="background-upload-tooltip">Change App Background</div>
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -43,7 +56,7 @@
             <button class="button" onclick="closeSidebar(); window.location.href='glasses_status.html'">Glasses Status</button>
             <button class="button" onclick="closeSidebar(); window.location.href='internet_connection.html'">Internet Connection</button>
             <button class="button" onclick="closeSidebar(); window.location.href='settings.html'">Settings</button>
-            <button class="button" onclick="closeSidebar(); checkAuthForTranscription()">Transcription</button>
+            <button class="button" onclick="closeSidebar(); window.location.href='transcription.html'">Transcription</button>
             <button class="button" onclick="closeSidebar(); window.location.href='account.html'">Account</button>
             <button class="button" onclick="closeSidebar(); window.location.href='support.html'">Support</button>
         </div>
@@ -53,7 +66,7 @@
             <div class="user-info" id="userInfo" style="display: none;">
                 <img id="userAvatar" src="" alt="User" class="user-avatar">
                 <span id="userName"></span>
-                <button class="button" style="margin-left: 10px; padding: 5px 10px;" onclick="firebaseAuth.signOut()">Sign Out</button>
+                <button id="logoutButton" class="button" style="margin-left: 10px; padding: 5px 10px;" onclick="authService.signOutUser()">Sign Out</button>
             </div>
             <button class="start-button" id="startButton" onclick="toggleButton()">
                 <span id="buttonText">Start</span>
@@ -62,6 +75,7 @@
             <div class="bluetooth-container">
                 <div class="bluetooth-status" id="bluetoothStatus">Disconnected</div>
                 <button class="bluetooth-button" id="bluetoothConnect">Connect Glasses</button>
+                <button class="bluetooth-button" id="bluetoothDisconnect" style="display: none; margin-left: 5px;">Disconnect</button>
             </div>
         </div>
     </div>
@@ -70,8 +84,8 @@
     <div class="modal-overlay" id="loginModal">
         <div class="modal">
             <div class="modal-title">Login Required</div>
-            <p>Please sign in to access the transcription feature.</p>
-            <button class="login-button" onclick="firebaseAuth.signInWithGoogle()">
+            <p>Please sign in to access this feature.</p>
+            <button id="googleLoginButton" class="login-button" onclick="authService.signInWithGoogle()">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
                 Sign in with Google
             </button>
@@ -82,10 +96,11 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
     <!-- Application Scripts -->
     <script src="js/auth.js"></script>
     <script src="js/bluetooth.js"></script>
-    <script type="module" src="js/main.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
