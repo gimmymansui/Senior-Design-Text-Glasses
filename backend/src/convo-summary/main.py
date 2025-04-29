@@ -15,16 +15,17 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"], 
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-    max_age=600,  # Cache preflight response for 10 minutes
+    allow_methods=["*"], 
+    allow_headers=["*"], 
+    max_age=600,  
 )
 
 @app.options("/{path:path}")
 async def options_route(request: Request, path: str):
     return {}
+
 
 security = HTTPBasic()
 
@@ -62,12 +63,6 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
             headers={"WWW-Authenticate": "Basic"},
         )
     return credentials.username
-
-class SummarizationParams(BaseModel):
-    format: Optional[str] = "general"
-    force_summarize: Optional[bool] = False
-    max_length: Optional[int] = 1000
-    min_length: Optional[int] = 100
 
 class ConversationSummaryRequest(BaseModel):
     conversation_id: int
@@ -117,7 +112,7 @@ If parts of the text are unintelligible or too messy to interpret, focus on summ
     }
     
     payload = {
-        "model": "anthropic/claude-3-haiku", 
+        "model": "google/gemini-2.0-flash-001", 
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
@@ -131,7 +126,7 @@ If parts of the text are unintelligible or too messy to interpret, focus on summ
         json=payload
     )
     
-    if response.status_code != 200:
+    if response.status_code != 200: 
         raise HTTPException(status_code=response.status_code, detail=f"OpenRouter API error: {response.text}")
     
     result = response.json()
