@@ -7,6 +7,7 @@ import MySQLdb
 import os
 import yaml
 import json
+from typing import Union
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -25,14 +26,13 @@ app = FastAPI(
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
 )
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],  
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-    max_age=600,  # Cache preflight response for 10 minutes
+    allow_methods=["*"], 
+    allow_headers=["*"],  
+    max_age=600, 
 )
 
 @app.options("/{path:path}")
@@ -40,11 +40,11 @@ async def options_route(request: Request, path: str):
     return {}
 
 security = HTTPBasic()
-DB_USER = os.getenv("DB_USER", "myuser")  # username
-DB_PASSWORD = os.getenv("DB_PASSWORD", "mypass")  # password
-DB_NAME = os.getenv("DB_NAME", "my_db")  # database name
-DB_HOST = os.getenv("DB_HOST", "my_host")  # Private IP address of Cloud SQL instance
-DB_PORT = os.getenv("DB_PORT", "3306")  # Default MySQL port
+DB_USER = os.getenv("DB_USER", "myuser")  
+DB_PASSWORD = os.getenv("DB_PASSWORD", "mypass") 
+DB_NAME = os.getenv("DB_NAME", "my_db")  
+DB_HOST = os.getenv("DB_HOST", "my_host") 
+DB_PORT = os.getenv("DB_PORT", "3306")  
 #set up basic authentication
 AUTH_USERNAME = os.getenv("API_USERNAME", "admin")
 AUTH_PASSWORD = os.getenv("API_PASSWORD", "password123")
@@ -94,7 +94,7 @@ def authenticate(credentials: HTTPBasicCredentials = Depends(security)):
 )
 async def store_conversation(
     username: str = Depends(authenticate),
-    user_id: int = Form(..., description="Unique identifier for the user"),
+    user_id: Union[int, str] = Form(..., description="Unique identifier for the user (can be integer or string)"),
     conversation_file: UploadFile = None
 ):
     conn = None
@@ -114,7 +114,7 @@ async def store_conversation(
                 year = date_parts[0]
                 month = date_parts[1]
                 day = date_parts[2]
-                date = f"{day}-{month}-{year}"  # Format as DD-MM-YYYY
+                date = f"{day}-{month}-{year}"  
             else:
                 date = ""
                 month = ""
@@ -124,7 +124,6 @@ async def store_conversation(
             month = ""
             year = ""
         
-        # Get the speaker (assuming first transcript has the correct speaker)
         speaker = ""
         if "transcripts" in conversation_data and len(conversation_data["transcripts"]) > 0:
             speaker = conversation_data["transcripts"][0].get("speaker", "")
@@ -134,25 +133,23 @@ async def store_conversation(
         if "transcripts" in conversation_data:
             for transcript in conversation_data["transcripts"]:
                 if "text" in transcript and "speaker" in transcript:
-                    # Add speaker name before each text segment on a new line
+
                     speaker_prefix = f"{transcript['speaker']}: "
-                    if combined_text:  # Add newline if there's already content
+                    if combined_text:  
                         combined_text += "\n"
                     combined_text += speaker_prefix + transcript["text"]
                 elif "text" in transcript:
-                    if combined_text:  # Add newline if there's already content
+                    if combined_text:  
                         combined_text += "\n"
                     combined_text += transcript["text"]
             combined_text = combined_text.strip()
         
-        # Store conversation metadata as JSON
+      
         conversation_metadata = json.dumps(conversation_data)
-        
-        # Get a database connection
+
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        # Execute SQL query
+ 
         cursor.execute(
             "INSERT INTO conversations (user_id, date, month, year, conversation, speaker, start_time, end_time, raw_data) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (user_id, date, month, year, combined_text, speaker, start_time, end_time, conversation_metadata),
@@ -174,21 +171,27 @@ async def store_conversation(
             conn.close()
 
 class SearchRequest(BaseModel):
-    user_id: int
+    user_id: Union[int, str]
    
 @app.post("/search/",
     response_model=dict,
     summary="Search for a conversation",
-    description="Retrieve a conversation for a specific user and date",
+    description="Retrieve conversations for a specific user and return all unique IDs associated with them",
     responses={
         200: {
-            "description": "Successfully retrieved the conversation",
+            "description": "Successfully retrieved the conversations",
             "content": {
                 "application/json": {
                     "example": {
                         "user_id": 123,
-                        "date": "01-01-2024",
-                        "conversation": "Example conversation content"
+                        "conversation_ids": [1, 2, 3],
+                        "conversations": [
+                            {
+                                "id": 1,
+                                "date": "01-01-2024",
+                                "conversation": "Example conversation content"
+                            }
+                        ]
                     }
                 }
             }
@@ -222,8 +225,11 @@ async def search_conversation(username: str = Depends(authenticate), request: Se
         if not results:
             return {"message": "No conversations found for the given user_id"}
 
+        conversation_ids = [row[0] for row in results]
+        
         conversations = [
             {
+                "id": row[0],
                 "user_id": row[1],
                 "date": row[2],
                 "month": row[3],
@@ -236,7 +242,11 @@ async def search_conversation(username: str = Depends(authenticate), request: Se
             } for row in results
         ]
 
-        return {"user_id": request.user_id, "conversations": conversations}
+        return {
+            "user_id": request.user_id, 
+            "conversation_ids": conversation_ids,
+            "conversations": conversations
+        }
 
     except Exception as e:
         return {"error": str(e)}
