@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bluetooth Test</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #0069d9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bluetooth Gateway Test Page</h1>
+    
+    <div class="instructions">
+        <h2>Instructions</h2>
+        <ol>
+            <li>Ensure the Node.js BLE Gateway (`bluetooth_bridge.js`) is running.</li>
+            <li>Click "Connect" and select the "TextGlasses Gateway (Node)" device from the browser prompt.</li>
+            <li>Once connected, you can click "Send Record Command".</li>
+            <li>Click "Disconnect" to end the session.</li>
+        </ol>
+    </div>
+    
+    <button id="connectBtn">Connect to Gateway</button>
+    <button id="disconnectBtn" disabled>Disconnect</button>
+    <button id="recordBtn" disabled>Send Record Command</button>
+    
+    <div id="statusArea" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px; min-height: 50px;">
+        Status: Disconnected
+    </div>
+    
+    <!-- Add this div for displaying received data -->
+    <div id="receivedDataArea" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px; max-height: 300px; overflow-y: auto;">
+        <h3>Received Conversation Data:</h3>
+        <pre id="conversationData">No data received yet</pre>
+    </div>
+    
+    <!-- Include the main Bluetooth handler script -->
+    <script src="./js/bluetooth.js"></script> 
+    
+    <script>
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const statusArea = document.getElementById('statusArea');
+        const conversationData = document.getElementById('conversationData');
+
+        function updateStatus(message) {
+            console.log("UI Status:", message);
+            statusArea.textContent = `Status: ${message}`;
+        }
+
+        // --- Event Listeners for Buttons ---
+        connectBtn.addEventListener('click', async () => {
+            if (!window.bluetoothHandler) {
+                updateStatus("Error: Bluetooth handler not loaded.");
+                return;
+            }
+            updateStatus("Attempting to connect...");
+            connectBtn.disabled = true; // Disable connect button during attempt
+            try {
+                await window.bluetoothHandler.connect();
+                // Status update handled by onConnected callback
+            } catch (error) {
+                updateStatus(`Connection failed: ${error.message}`);
+                connectBtn.disabled = false; // Re-enable if connection fails
+            }
+        });
+
+        disconnectBtn.addEventListener('click', async () => {
+            if (!window.bluetoothHandler || !window.bluetoothHandler.isConnected) {
+                updateStatus("Not connected.");
+                return;
+            }
+            updateStatus("Disconnecting...");
+            try {
+                await window.bluetoothHandler.disconnect();
+                 // Status update handled by onDisconnected callback
+            } catch (error) {
+                updateStatus(`Disconnection error: ${error.message}`);
+                 // Even if disconnect fails, update UI state as if disconnected
+                 bluetoothHandler.onDisconnected(); 
+            }
+        });
+
+        recordBtn.addEventListener('click', async () => {
+            if (!window.bluetoothHandler || !window.bluetoothHandler.isConnected) {
+                updateStatus("Cannot send command: Not connected.");
+                return;
+            }
+            updateStatus("Sending 'record' command...");
+            try {
+                await window.bluetoothHandler.sendRecordCommand();
+                updateStatus("'record' command sent successfully.");
+            } catch (error) {
+                updateStatus(`Error sending command: ${error.message}`);
+            }
+        });
+
+        // --- Bluetooth Handler Callbacks ---
+        if (window.bluetoothHandler) {
+            window.bluetoothHandler.onConnected = () => {
+                updateStatus("Connected to device: " + (window.bluetoothHandler.device?.name || 'Unknown'));
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                recordBtn.disabled = false;
+            };
+
+            window.bluetoothHandler.onDisconnected = () => {
+                updateStatus("Disconnected.");
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                recordBtn.disabled = true;
+            };
+
+            // Add handler for received data
+            window.bluetoothHandler.onDataReceived = (data) => {
+                updateStatus('Received conversation data');
+                // Pretty print the JSON data
+                conversationData.textContent = JSON.stringify(data, null, 2);
+                
+                // Optionally save the received data
+                const blob = new Blob([JSON.stringify(data, null, 2)], 
+                                    { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'received_conversation.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+        } else {
+             updateStatus("Error: bluetoothHandler instance not found. Check script loading.");
+        }
+        
+         // Initial state check in case the page reloads while connected (unlikely with BLE)
+         if (window.bluetoothHandler && window.bluetoothHandler.isConnected) {
+              window.bluetoothHandler.onConnected();
+         } else {
+              window.bluetoothHandler.onDisconnected(); // Set initial UI state
+         }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glasses Status - OptiView</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+    <div class="universe" id="universe"></div>
+    
+    <div class="home-toggle" onclick="goHome()">
+        <span>Home</span>
+    </div>
+
+    <div class="container-page">
+        <div class="glasses-title">Glasses Status</div>
+        
+        <div class="status-grid">
+            <div class="status-card">
+                <h3>Device Health</h3>
+                <div class="status-item">
+                    <span class="label">Overall Status</span>
+                    <span>Operational <span class="status-indicator green"></span></span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Last Maintenance</span>
+                    <span>March 15, 2025</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Software Version</span>
+                    <span>2.5.3</span>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h3>Connectivity</h3>
+                <div class="status-item">
+                    <span class="label">Bluetooth</span>
+                    <span>Connected <span class="status-indicator green"></span></span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Wi-Fi</span>
+                    <span>Connected <span class="status-indicator green"></span></span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Signal Strength</span>
+                    <span>Excellent</span>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h3>Battery</h3>
+                <div class="status-item">
+                    <span class="label">Current Level</span>
+                    <span>87% <span class="status-indicator green"></span></span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Charging Status</span>
+                    <span>Not Charging</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Estimated Runtime</span>
+                    <span>4h 23m</span>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h3>Sensors</h3>
+                <div class="status-item">
+                    <span class="label">Camera</span>
+                    <span>Operational <span class="status-indicator green"></span></span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Microphone</span>
+                    <span>Operational <span class="status-indicator green"></span></span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Motion Sensors</span>
+                    <span>Calibrated <span class="status-indicator green"></span></span>
+                </div>
+            </div>
+        </div>
+
+        <button class="return-button" onclick="goHome()">Return to Home</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/pages.js"></script>
+</body>
+</html>

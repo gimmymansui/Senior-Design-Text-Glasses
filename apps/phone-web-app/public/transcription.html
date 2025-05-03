@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcriptions - OptiView</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Hide elements critical to the page content while auth is pending */
+        body.auth-pending .container-page {
+            display: none; 
+        }
+        /* Optionally keep background visible */
+        body.auth-pending .universe {
+            display: block; /* Or keep as is */
+        }
+    </style>
+</head>
+<body class="auth-pending">
+    <div class="universe" id="universe"></div>
+    
+    <div class="home-toggle" onclick="goHome()">
+        <span>Home</span>
+    </div>
+
+    <div class="container-page">
+        <div class="transcription-title">My Transcriptions</div>
+        
+        <div class="upload-container">
+            <label class="upload-btn">
+                <i class="fas fa-upload"></i> Upload Conversation File
+                <input type="file" id="conversationUpload" accept=".json" onchange="handleConversationUpload(event)">
+            </label>
+            <div class="upload-status" id="uploadStatus"></div>
+        </div>
+        
+        <div class="transcription-list">
+            <div class="transcription-item">
+                <div class="transcription-header">
+                    <div class="transcription-title-item">Coffee Shop Meeting</div>
+                    <div class="transcription-date">March 28, 2025</div>
+                </div>
+                <div class="transcription-preview">
+                    We discussed the project timeline and resource allocation for Q2. John will handle the backend development while Lisa focuses on the user interface...
+                </div>
+            </div>
+            
+            <div class="transcription-item">
+                <div class="transcription-header">
+                    <div class="transcription-title-item">Team Standup</div>
+                    <div class="transcription-date">March 27, 2025</div>
+                </div>
+                <div class="transcription-preview">
+                    Sarah reported that the database migration is complete. Alex is still working on the authentication module, expecting to finish by Friday...
+                </div>
+            </div>
+            
+            <div class="transcription-item">
+                <div class="transcription-header">
+                    <div class="transcription-title-item">Client Call - Acme Corp</div>
+                    <div class="transcription-date">March 25, 2025</div>
+                </div>
+                <div class="transcription-preview">
+                    The client expressed satisfaction with the initial prototype but requested changes to the dashboard layout. They'd like to see more metrics at a glance...
+                </div>
+            </div>
+            
+            <div class="transcription-item">
+                <div class="transcription-header">
+                    <div class="transcription-title-item">Brainstorming Session</div>
+                    <div class="transcription-date">March 23, 2025</div>
+                </div>
+                <div class="transcription-preview">
+                    We explored several new feature ideas for the next version. The voice command enhancement received the most enthusiasm from the team...
+                </div>
+            </div>
+            
+            <div class="transcription-item">
+                <div class="transcription-header">
+                    <div class="transcription-title-item">Product Strategy Meeting</div>
+                    <div class="transcription-date">March 20, 2025</div>
+                </div>
+                <div class="transcription-preview">
+                    We defined the roadmap for Q3 and Q4. Key focus areas include improving battery efficiency, adding language support, and enhancing the AR capabilities...
+                </div>
+            </div>
+        </div>
+
+        <button class="return-button" onclick="goHome()">Return to Home</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/pages.js"></script>
+    <script src="js/upload.js"></script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - OptiView</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+    <div class="universe" id="universe"></div>
+    
+    <div class="home-toggle" onclick="goHome()">
+        <span>Home</span>
+    </div>
+
+    <div class="container-page">
+        <div class="settings-title">Settings</div>
+        
+        <div class="settings-section">
+            <h3>Display Settings</h3>
+            <div class="setting-item">
+                <label for="darkMode">Dark Mode</label>
+                <label class="switch">
+                    <input type="checkbox" id="darkMode">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <label for="fontSize">Font Size</label>
+                <select id="fontSize" class="settings-select">
+                    <option value="small">Small</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="large">Large</option>
+                </select>
+            </div>
+            
+            <div class="setting-item">
+                <label for="language">Language</label>
+                <select id="language" class="settings-select">
+                    <option value="en" selected>English</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="settings-section">
+            <h3>Notification Settings</h3>
+            <div class="setting-item">
+                <label for="notifications">Push Notifications</label>
+                <label class="switch">
+                    <input type="checkbox" id="notifications" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <label for="emailNotif">Email Notifications</label>
+                <label class="switch">
+                    <input type="checkbox" id="emailNotif">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="settings-section">
+            <h3>API Configuration</h3>
+            <div class="setting-item">
+                <label for="apiUrl">API URL</label>
+                <input type="text" id="apiUrl" class="settings-input" placeholder="http://35.221.48.83">
+            </div>
+            
+            <div class="setting-item">
+                <label for="apiUsername">API Username</label>
+                <input type="text" id="apiUsername" class="settings-input" placeholder="admin">
+            </div>
+            
+            <div class="setting-item">
+                <label for="apiPassword">API Password</label>
+                <input type="password" id="apiPassword" class="settings-input" placeholder="Password">
+            </div>
+            
+            <button id="saveApiConfig" class="button">Save API Configuration</button>
+            <div id="apiConfigStatus" class="settings-status"></div>
+        </div>
+        
+        <button class="return-button" onclick="goHome()">Return to Home</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/pages.js"></script>
+    <script src="js/upload.js"></script>
+    <script>
+        // Load API configuration from localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            // Default values from upload.js
+            const defaultApiUrl = 'http://35.221.48.83';
+            const defaultUsername = 'admin';
+            
+            // Get stored values
+            const apiUrl = localStorage.getItem('apiUrl');
+            const apiUsername = localStorage.getItem('apiUsername');
+            const apiPassword = localStorage.getItem('apiPassword');
+            
+            // Set values with defaults as fallback
+            document.getElementById('apiUrl').value = apiUrl || defaultApiUrl;
+            document.getElementById('apiUsername').value = apiUsername || defaultUsername;
+            document.getElementById('apiUsername').placeholder = defaultUsername;
+            // We don't fill in the password for security reasons
+            
+            // Save API configuration
+            document.getElementById('saveApiConfig').addEventListener('click', function() {
+                const url = document.getElementById('apiUrl').value.trim();
+                const username = document.getElementById('apiUsername').value.trim();
+                const password = document.getElementById('apiPassword').value.trim();
+                const statusElem = document.getElementById('apiConfigStatus');
+                
+                if (!url) {
+                    statusElem.textContent = 'Error: API URL is required';
+                    return;
+                }
+                
+                // Save to localStorage
+                localStorage.setItem('apiUrl', url);
+                
+                // Only save username and password if provided
+                if (username) localStorage.setItem('apiUsername', username);
+                if (password) localStorage.setItem('apiPassword', password);
+                
+                statusElem.textContent = 'API configuration saved successfully!';
+                setTimeout(() => {
+                    statusElem.textContent = '';
+                }, 3000);
+            });
+        });
+    </script>
+</body>
+</html>

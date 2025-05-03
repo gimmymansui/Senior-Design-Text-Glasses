@@ -2,7 +2,7 @@
   import NotificationBlock from "$lib/components/NotificationBlock.svelte";
   import SubtitlesBlock from "$lib/components/SubtitlesBlock.svelte";
   import WebSocketManager from "$lib/components/WebSocketManager.svelte";
-  import { subtitlesStore, addSubtitle } from "$lib/subtitles";
+  import { subtitlesStore } from "$lib/subtitles";
   import { notificationStore, addNotification } from "$lib/notification";
   import { isRecording, toggleRecording, recordingStatus } from "$lib/record";
   
@@ -34,11 +34,11 @@
     </div>
     
     <div class="subtitles-wrapper">
-      {#each $subtitlesStore as { speakerName, text, isPrevious }}
+      {#each $subtitlesStore as sub (sub.sentenceId)}
         <SubtitlesBlock     
-          {speakerName} 
-          {text} 
-          {isPrevious}
+          speakerName={sub.speakerName} 
+          text={sub.text} 
+          isPrevious={sub.isPrevious}
         />
       {/each}
     </div>

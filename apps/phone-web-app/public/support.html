@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - OptiView</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="universe" id="universe"></div>
+    
+    <div class="home-toggle" onclick="goHome()">
+        <span>Home</span>
+    </div>
+
+    <div class="container-page">
+        <div class="support-title">Support Center</div>
+        
+        <div class="support-options">
+            <div class="support-option">
+                <i class="fas fa-book"></i>
+                <h3>Documentation</h3>
+                <p>Browse our extensive documentation for detailed instructions and guides.</p>
+            </div>
+            <div class="support-option">
+                <i class="fas fa-comment-alt"></i>
+                <h3>Live Chat</h3>
+                <p>Connect with a support agent for real-time assistance.</p>
+            </div>
+            <div class="support-option">
+                <i class="fas fa-envelope"></i>
+                <h3>Email Support</h3>
+                <p>Send us an email and we'll get back to you within 24 hours.</p>
+            </div>
+            <div class="support-option">
+                <i class="fas fa-question-circle"></i>
+                <h3>FAQ</h3>
+                <p>Find answers to commonly asked questions about our products.</p>
+            </div>
+            <div class="support-option">
+                <i class="fas fa-cogs"></i>
+                <h3>Troubleshooting</h3>
+                <p>Follow our step-by-step guides to resolve common issues.</p>
+            </div>
+            <div class="support-option">
+                <i class="fas fa-video"></i>
+                <h3>Video Tutorials</h3>
+                <p>Watch detailed tutorials on how to use your smart glasses.</p>
+            </div>
+        </div>
+
+        <button class="return-button" onclick="goHome()">Return to Home</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/pages.js"></script>
+</body>
+</html>

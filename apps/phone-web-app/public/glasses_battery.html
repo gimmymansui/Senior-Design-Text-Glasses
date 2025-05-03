@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glasses Battery - OptiView</title>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+    <div class="universe" id="universe"></div>
+
+    <div class="home-toggle" onclick="goHome()">
+        <span>Home</span>
+    </div>
+
+    <div class="container-page">
+        <div class="battery-title">Glasses Battery</div>
+        
+        <div class="battery-info">
+            <div class="battery-detail">
+                <h3>Current Status</h3>
+                <p>Battery Level: 87%</p>
+                <p>Charging: No</p>
+                <p>Estimated Time Remaining: 4h 23m</p>
+            </div>
+            <div class="battery-detail">
+                <h3>Battery Health</h3>
+                <p>Cycle Count: 42</p>
+                <p>Capacity: 95%</p>
+                <p>Last Charged: March 27, 2025</p>
+            </div>
+            <div class="battery-detail">
+                <h3>Power Consumption</h3>
+                <p>Average Usage: 0.4W</p>
+                <p>Current Draw: 0.2W</p>
+                <p>Power Mode: Normal</p>
+            </div>
+            <div class="battery-detail">
+                <h3>Charging Information</h3>
+                <p>Charger Type: USB-C</p>
+                <p>Charging Speed: Fast Charge</p>
+                <p>Full Charge Time: ~1h 15m</p>
+            </div>
+        </div>
+
+        <button class="return-button" onclick="goHome()">Return to Home</button>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/auth.js"></script>
+    <script src="js/pages.js"></script>
+</body>
+</html>
