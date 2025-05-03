@@ -2,27 +2,29 @@ apiVersion: v1
 kind: Service
 metadata:
   name: convo-upload-service
+  annotations:
+    cloud.google.com/backend-config: '{"default": "convo-upload-backend-config"}'
 spec:
-  type: LoadBalancer
-  loadBalancerIP: 35.221.48.83
+
   selector:
     app: convo-upload
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 8080
+      targetPort: 8080 
   
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: convo-summary-service
+  annotations:
+    cloud.google.com/backend-config: '{"default": "convo-summary-backend-config"}'
 spec:
   selector:
     app: convo-summary
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 8000
-  type: LoadBalancer
-  loadBalancerIP: 34.85.163.145
+      targetPort: 8000  
+

@@ -1,0 +1,7 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: convo-managed-cert
+spec:
+  domains:
+    - group31-smartglasses-2025-api.net
