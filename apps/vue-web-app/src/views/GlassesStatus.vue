@@ -4,21 +4,6 @@
 
      <!-- TODO: Bind data dynamically -->
     <div class="status-grid">
-        <div class="status-card">
-            <h3>Device Health</h3>
-            <div class="status-item">
-                <span class="label">Overall Status</span>
-                <span>Operational <span class="status-indicator green"></span></span>
-            </div>
-            <div class="status-item">
-                <span class="label">Last Maintenance</span>
-                <span>March 15, 2025</span>
-            </div>
-            <div class="status-item">
-                <span class="label">Software Version</span>
-                <span>2.5.3</span>
-            </div>
-        </div>
 
         <div class="status-card">
             <h3>Connectivity</h3>
