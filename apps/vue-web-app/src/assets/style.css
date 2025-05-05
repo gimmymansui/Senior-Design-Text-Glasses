@@ -586,7 +586,6 @@ input:focus + .funky-slider {
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    margin-top: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
