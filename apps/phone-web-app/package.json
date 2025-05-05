@@ -2,13 +2,13 @@
   "name": "text-glasses-web-app",
   "version": "1.0.0",
   "description": "Web application for Text Glasses",
-  "main": "server.js",
   "scripts": {
     "start": "node public/server.js",
     "dev": "nodemon public/server.js"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "http-server": "^14.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

@@ -141,6 +141,7 @@ async function testStoreConversation() {
         formData.append('date', TEST_DATE);
         formData.append('month', TEST_MONTH);
         formData.append('year', TEST_YEAR);
+        formData.append('speaker', 'user');  // Add speaker field
         
         // Create a file for conversation
         const conversationBlob = new Blob(

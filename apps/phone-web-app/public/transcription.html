@@ -29,8 +29,15 @@
     <div class="container-page">
         <div class="transcription-title">My Transcriptions</div>
         
-        <div class="transcription-list" id="transcriptionList">
-            <!-- Transcription items will be loaded here -->
+        <div class="upload-container">
+            <label class="upload-btn">
+                <i class="fas fa-upload"></i> Upload Conversation File
+                <input type="file" id="conversationUpload" accept=".json" onchange="handleConversationUpload(event)">
+            </label>
+            <div class="upload-status" id="uploadStatus"></div>
+        </div>
+        
+        <div class="transcription-list">
             <div class="transcription-item">
                 <div class="transcription-header">
                     <div class="transcription-title-item">Coffee Shop Meeting</div>
@@ -93,6 +100,7 @@
     <!-- Application Scripts -->
     <script src="js/auth.js"></script>
     <script src="js/pages.js"></script>
+<<<<<<< HEAD
     <script src="js/bluetooth.js"></script> <!-- Ensure bluetooth.js is loaded -->
 
     <script>
@@ -223,5 +231,8 @@
         // });
 
     </script>
+=======
+    <script src="js/upload.js"></script>
+>>>>>>> origin/main
 </body>
 </html>
